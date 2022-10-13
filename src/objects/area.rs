@@ -1,11 +1,10 @@
 use std::any::Any;
 use std::cell::{Cell, RefCell};
 use std::error::Error;
-use std::mem::{swap, take};
 use std::rc::Rc;
-use sdl2::libc::pollfd;
 use crate::geometry::position::Position;
 use super::game_object::GameObject;
+use rustc_hash::FxHashMap;
 
 pub mod errors {
   use std::error::Error;
@@ -56,26 +55,20 @@ pub struct Area {
   sx: usize,
   sy: usize,
   sz: usize,
-  area: Vec<Vec<Vec<Option<Rc<RefCell<GameObject>>>>>>,
+  area: Vec<Vec<Vec<Option<GameObjectID>>>>,
+  objects: FxHashMap<GameObjectID, GameObject>,
+  _obj_id: GameObjectID,
 }
 
 impl Area {
   pub fn new(sx: usize, sy: usize, sz: usize) -> Area {
-    // let mut area: Vec<Vec<Vec<Cell<Option<GameObjectRef>>>>> = Vec::new();
-    // for z in 0..sz {
-    //   area.push(Vec::new());
-    //   for y in 0..sy {
-    //     area[z].push(Vec::new());
-    //     for z in 0..sz {
-    //       area[z][y].push(Cell::new(Option::<GameObjectRef>::None));
-    //     }
-    //   }
-    // }
     Area {
       sx,
       sy,
       sz,
-      area: vec![vec![vec![Option::<GameObjectRef>::None; sx]; sy]; sz],
+      area: vec![vec![vec![Option::<GameObjectID>::None; sx]; sy]; sz],
+      objects: FxHashMap::<GameObjectID, GameObject>::default(),
+      _obj_id: GameObjectID::default(),
     }
   }
 
@@ -91,21 +84,26 @@ impl Area {
     self.sz
   }
 
-  pub fn get(&self, x: usize, y: usize, z: usize) -> &Option<GameObjectRef> {
-    &self.area[z][y][x]
+  pub fn get(&self, x: usize, y: usize, z: usize) -> Option<&GameObject> {
+    if let Some(id) =  self.area[z][y][x] {
+        return self.objects.get(&id);
+    }
+    return None;
   }
 
-  pub fn get_by_pos(&self, pos: Position) -> &Option<GameObjectRef> {
-    &self.area[pos.get_z()][pos.get_y()][pos.get_x()]
+  pub fn get_by_pos(&self, pos: Position) -> Option<&GameObject> {
+    if let Some(id) = self.area[pos.get_z()][pos.get_y()][pos.get_x()] {
+      return self.objects.get(&id);
+    }
+    return None;
   }
 
-  pub fn pop(&mut self, x: usize, y: usize, z: usize) -> Option<GameObjectRef> {
+  pub fn remove(&mut self, x: usize, y: usize, z: usize) -> Option<GameObjectID> {
     self.area[z][y][x].take()
   }
 
-  pub fn pop_object(&mut self, obj: &GameObject) -> Option<GameObjectRef> {
-    let pos = obj.get_pos();
-    self.area[pos.get_z()][pos.get_y()][pos.get_x()].take()
+  pub fn pop(&mut self, obj: GameObjectID) -> Option<GameObject> {
+    self.objects.remove(&obj)
   }
 
   fn check_pos(&self, pos: &Position) -> bool {
@@ -114,7 +112,6 @@ impl Area {
 
   pub fn update_object(&mut self, old_pos: Position, new_pos: Position) {
     let tmp = self.area[old_pos.z][old_pos.y][old_pos.x].take();
-    // let p2 = self.area[new_pos.z][new_pos.y][new_pos.x];
     self.area[old_pos.z][old_pos.y][old_pos.x] = self.area[new_pos.z][new_pos.y][new_pos.x].take();
     self.area[new_pos.z][new_pos.y][new_pos.x] = tmp;
 
@@ -124,40 +121,17 @@ impl Area {
     Rc::new(RefCell::new(self))
   }
 
-  pub fn insert(&mut self, go: GameObjectRef) -> Result<(), Box<dyn Error>> {
-    let pos = go.borrow().get_pos();
+  pub fn insert(&mut self, go: GameObject) -> Result<GameObjectID, Box<dyn Error>> {
+    let pos = go.get_pos();
+    let id = self._obj_id;
+    self._obj_id += 1;
+    self.objects.insert(self._obj_id, go);
     match self.get_by_pos(pos) {
       None => {
-        self.area[pos.z][pos.y][pos.x] = Some(go);
-        Ok(())
+        self.area[pos.z][pos.y][pos.x] = Some(id);
+        Ok(id)
       }
       Some(_) => { return Err(Box::new(FoundObjectWhileInserting(pos))); }
     }
   }
 }
-
-// pub fn try_insert(area: &Rc<Area>, go_reg: &mut GameObject) -> Result<(), Box<dyn Error>> {
-//   let mut flag = false;
-//   let mut pos = Position::new(0, 0, 0);
-//   {
-//     pos = go_reg.get_pos();
-//     if abm.check_pos(&pos) {
-//       match abm.get_by_pos(pos) {
-//         None => {
-//           flag = true;
-//         }
-//         Some(_) => {
-//         }
-//       }
-//     } else {
-//       return Err(Box::new(PositionOutOfRange::new(pos, &(*abm))));
-//     }
-//   }
-//   return if flag {
-//     let _ = area.borrow_mut().area[pos.get_z()][pos.get_y()][pos.get_x()].insert(Rc::clone(go));
-//     go_req.set_area(area);
-//     Ok(())
-//   } else {
-//     Err(Box::new(FoundObjectWhileInserting(pos)))
-//   }
-// }
