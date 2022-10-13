@@ -1,4 +1,6 @@
 pub mod position;
+pub mod rect;
+pub mod size;
 use position::Position;
 
 #[cfg(test)]

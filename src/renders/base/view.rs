@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use crate::geometry::position::Position;
 use crate::objects::area::{Area, AreaRef};
-use crate::objects::game_object::GameObjectRef;
+use crate::objects::game_object::GameObject;
 
 pub struct View {
   area: AreaRef,
@@ -29,12 +29,7 @@ impl View {
 
   pub fn get_pos(&self) -> Position { self.pos }
 
-  pub fn get_game_object(&self, pos: Position) -> Option<GameObjectRef> {
-    return match self.area.borrow().get_by_pos(pos) {
-      None => { None }
-      Some(go) => {
-        Some(Rc::clone(go))
-      }
-    };
+  pub fn get_area(&self) -> &AreaRef {
+    return &self.area;
   }
 }

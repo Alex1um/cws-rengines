@@ -1,15 +1,17 @@
 use std::fmt::{Display, Formatter};
 
+type CoordsType = usize;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Position {
-  pub x: usize,
-  pub y: usize,
-  pub z: usize,
+  pub x: CoordsType,
+  pub y: CoordsType,
+  pub z: CoordsType,
 }
 
 
 impl Position {
-  pub fn new(x: usize, y: usize, z: usize) -> Position {
+  pub fn new(x: CoordsType, y: CoordsType, z: CoordsType) -> Position {
     Position {
       x,
       y,
@@ -17,27 +19,27 @@ impl Position {
     }
   }
 
-  pub fn set(&mut self, x: usize, y: usize, z: usize) {
+  pub fn set(&mut self, x: CoordsType, y: CoordsType, z: CoordsType) {
     self.x = x;
     self.y = y;
     self.z = z
   }
 
-  pub fn change_cords(&mut self, dx: usize, dy: usize, dz: usize) {
+  pub fn change_cords(&mut self, dx: CoordsType, dy: CoordsType, dz: CoordsType) {
     self.x += dx;
     self.y += dy;
     self.z += dz;
   }
 
-  pub fn get_x(&self) -> usize {
+  pub fn get_x(&self) -> CoordsType {
     self.x
   }
 
-  pub fn get_y(&self) -> usize {
+  pub fn get_y(&self) -> CoordsType {
     self.y
   }
 
-  pub fn get_z(&self) -> usize {
+  pub fn get_z(&self) -> CoordsType {
     self.z
   }
 }

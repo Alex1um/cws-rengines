@@ -51,20 +51,21 @@ impl<'a> Render<'a> {
     // self.canvas.clear();
     for v in &self.screen.view_stack {
       let Position { x: xs, y: ys, z: zs } = v.get_pos();
+      let area = v.get_area();
       let width = v.get_width();
       let height = v.get_height();
       let layers = v.get_layers();
       for z in zs..layers {
         for y in ys..height {
           for x in zs..width {
-            if let Some(cur_obj) = v.get_game_object(Position::new(x, y, z)) {
+            if let Some(cur_obj) = area.borrow().get(x, y, z) {
               let obj = Rect::new((x * self.screen.ratio_x) as i32,
                                   (y * self.screen.ratio_y) as i32,
                                   (self.screen.ratio_x) as u32,
                                   (self.screen.ratio_y) as u32,
               );
 
-              let texture: &Texture = self.textures.get(cur_obj.borrow().get_type() as usize).expect("texture of object type");
+              let texture: &Texture = self.textures.get(cur_obj.get_type() as usize).expect("texture of object type");
               texture.query();
               self.canvas.copy(texture, None, obj).expect("successful texture write");
             }
