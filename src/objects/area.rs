@@ -110,11 +110,17 @@ impl Area {
     return pos.get_x() < self.sx && pos.get_y() < self.sy && pos.get_z() < self.sz;
   }
 
-  pub fn update_object(&mut self, old_pos: Position, new_pos: Position) {
+  pub fn swap_objects(&mut self, old_pos: Position, new_pos: Position) {
     let tmp = self.area[old_pos.z][old_pos.y][old_pos.x].take();
     self.area[old_pos.z][old_pos.y][old_pos.x] = self.area[new_pos.z][new_pos.y][new_pos.x].take();
     self.area[new_pos.z][new_pos.y][new_pos.x] = tmp;
+  }
 
+  pub fn update_object(&mut self, id: GameObjectID, new_pos: Position) {
+    if let Some(obj) = self.objects.get(&id) {
+      self.swap_objects(obj.get_pos(), new_pos);
+      self.set_object_pos(id, new_pos);
+    }
   }
 
   pub fn create_ref(self) -> AreaRef {
@@ -125,13 +131,26 @@ impl Area {
     let pos = go.get_pos();
     let id = self._obj_id;
     self._obj_id += 1;
-    self.objects.insert(self._obj_id, go);
+    self.objects.insert(id, go);
     match self.get_by_pos(pos) {
       None => {
         self.area[pos.z][pos.y][pos.x] = Some(id);
         Ok(id)
       }
       Some(_) => { return Err(Box::new(FoundObjectWhileInserting(pos))); }
+    }
+  }
+
+  pub fn get_object_pos(&self, id: GameObjectID) -> Option<Position> {
+    if let Some(obj) = self.objects.get(&id) {
+      return Some(obj.get_pos());
+    }
+    return None;
+  }
+
+  pub fn set_object_pos(&mut self, id: GameObjectID, new_pos: Position) {
+    if let Some(obj) = self.objects.get_mut(&id) {
+      obj.set_pos(new_pos)
     }
   }
 }

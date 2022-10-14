@@ -27,6 +27,10 @@ impl GameObject {
     return self.pos;
   }
 
+  pub fn set_pos(&mut self, pos: Position) {
+    self.pos = pos;
+  }
+
   pub fn get_type(&self) -> i32 {
     return self.r#type;
   }

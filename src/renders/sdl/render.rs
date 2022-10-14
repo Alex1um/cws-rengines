@@ -57,7 +57,7 @@ impl<'a> Render<'a> {
       let layers = v.get_layers();
       for z in zs..layers {
         for y in ys..height {
-          for x in zs..width {
+          for x in xs..width {
             if let Some(cur_obj) = area.borrow().get(x, y, z) {
               let obj = Rect::new((x * self.screen.ratio_x) as i32,
                                   (y * self.screen.ratio_y) as i32,
