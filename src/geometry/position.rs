@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 type CoordsType = usize;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 pub struct Position {
   pub x: CoordsType,
   pub y: CoordsType,

@@ -5,6 +5,7 @@ use crate::objects::game_object::GameObject;
 pub mod geometry;
 pub mod objects;
 pub mod renders;
+pub mod events;
 
 pub extern "C" fn create_object(pos: Position, r#type: i32) -> GameObject {
   return GameObject::new(r#type, pos);

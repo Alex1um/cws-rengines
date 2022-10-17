@@ -4,33 +4,41 @@ use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator, WindowCanvas};
+use sdl2::{EventPump, Sdl};
+use sdl2::keyboard::{Keycode, Scancode};
 use crate::renders::base::screen::Screen;
 use sdl2::video::{Window, WindowContext};
+use crate::events::event::Event;
+use crate::events::event_provider::EventProvider;
 use crate::geometry::position::Position;
+use crate::renders::base::render::Render;
 
-pub struct Render<'a> {
+pub struct SDLRender<'a> {
   screen: Screen,
   width: usize,
   height: usize,
   canvas: WindowCanvas,
   textures: Vec<Texture<'a>>,
+  event_pump: EventPump,
 }
 
 
-impl<'a> Render<'a> {
-  pub fn new(screen: Screen, width: usize, height: usize) -> Result<(TextureCreator<WindowContext>, Render<'a>), Box<dyn Error>> {
+impl<'a> SDLRender<'a> {
+  pub fn new(screen: Screen, width: usize, height: usize) -> Result<(TextureCreator<WindowContext>, SDLRender<'a>), Box<dyn Error>> {
     let context = sdl2::init()?;
+    let pump = context.event_pump()?;
     let video = context.video()?;
     let window = video.window("Main", width as u32, height as u32)
       .build()?;
     let canvas = window.into_canvas().build()?;
     let creator = canvas.texture_creator();
-    let mut render = Render {
+    let mut render = SDLRender {
       screen,
       width,
       height,
       canvas,
       textures: Vec::<Texture>::new(),
+      event_pump: pump,
     };
     Ok((creator, render))
   }
@@ -39,14 +47,16 @@ impl<'a> Render<'a> {
     self.canvas.texture_creator()
   }
 
-  pub fn load_textures(&mut self, creator: &'a TextureCreator<WindowContext>,tl: Vec<&str>) {
+  pub fn load_textures(&mut self, creator: &'a TextureCreator<WindowContext>, tl: Vec<&str>) {
     for f in tl {
       let texture = creator.load_texture(f).expect("loaded texture");
       self.textures.push(texture);
     }
   }
+}
 
-  pub fn render(&mut self) {
+impl Render for SDLRender<'_> {
+  fn render(&mut self) {
     // self.canvas.set_draw_color(Color::RGB(0, 0, 0));
     // self.canvas.clear();
     for v in &self.screen.view_stack {
@@ -74,5 +84,15 @@ impl<'a> Render<'a> {
       }
     }
     self.canvas.present();
+  }
+}
+
+impl EventProvider for SDLRender<'_> {
+  fn provide_events(&mut self, buf: &mut Vec<Event>) {
+    buf.append(&mut self.event_pump
+      .keyboard_state()
+      .pressed_scancodes()
+      .map(|e| Event::KeyBoard { key: e as i32 })
+      .collect());
   }
 }
