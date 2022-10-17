@@ -9,6 +9,10 @@ edition = "2021"
 sdl2 = {default-features = false, version="0.35.2", features=["image"]}
 rustc-hash = "1.1.0"
 
+[lib]
+#crate-type = ["staticlib"]
+crate-type = ["cdylib", "staticlib"]
+
 #[dependencies.sdl2]
 #version = "0.35.2"
 #features = ["image"]

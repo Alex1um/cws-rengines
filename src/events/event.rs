@@ -1,6 +1,6 @@
 use std::hash::{Hash, Hasher};
 use std::io::Bytes;
-use crate::Position;
+use crate::geometry::position::Position;
 
 pub enum Event {
   KeyBoard {

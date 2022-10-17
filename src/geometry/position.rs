@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-type CoordsType = usize;
+pub type CoordsType = usize;
 
 #[derive(Copy, Clone, Debug, Hash)]
 pub struct Position {
