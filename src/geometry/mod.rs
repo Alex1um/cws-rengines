@@ -1,12 +1,10 @@
 pub mod position;
 pub mod rect;
 pub mod size;
-use position::Position;
 
 #[cfg(test)]
 mod tests {
-  use std::rc::Rc;
-  use super::*;
+  use crate::geometry::position::Position;
 
   #[test]
   fn pos_create() {

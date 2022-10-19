@@ -1,8 +1,6 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use crate::geometry::position::Position;
-use crate::objects::area::{Area, AreaRef};
-use crate::objects::game_object::GameObject;
+use crate::objects::area::{AreaRef};
 
 pub struct View {
   area: AreaRef,

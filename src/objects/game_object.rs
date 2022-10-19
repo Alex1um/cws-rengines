@@ -1,10 +1,4 @@
-use std::cell::{Cell, RefCell};
-use std::rc::{Rc, Weak};
 use crate::geometry::position::Position;
-use super::area::*;
-use crate::objects::area::errors;
-use std::error::Error as TError;
-use std::fmt::Error;
 
 pub type GameObjectID = u32;
 pub type GameObjectRef = u32;

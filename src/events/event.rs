@@ -1,5 +1,4 @@
 use std::hash::{Hash, Hasher};
-use std::io::Bytes;
 use crate::geometry::position::Position;
 
 pub enum Event {
@@ -30,11 +29,11 @@ impl Hash for Event {
         d.hash(state);
         3.hash(state);
       }
-      self::Event::KeyBoard { key: k } => {
+      self::Event::KeyBoard { key: _ } => {
         // k.hash(state);
         1.hash(state);
       }
-      self::Event::Mouse { key: k, pos: position } => {
+      self::Event::Mouse { key: _, pos: _ } => {
         // k.hash(state);
         2.hash(state);
       }
@@ -45,9 +44,6 @@ impl Hash for Event {
         5.hash(state);
       }
       self::Event::Loop => {
-        0.hash(state);
-      }
-      _ => {
         0.hash(state);
       }
     }

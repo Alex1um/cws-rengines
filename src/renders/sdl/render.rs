@@ -1,13 +1,10 @@
 use std::error::Error;
-use std::slice::Windows;
 use sdl2::image::LoadTexture;
-use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator, WindowCanvas};
-use sdl2::{EventPump, Sdl};
-use sdl2::keyboard::{Keycode, Scancode};
+use sdl2::{EventPump};
 use crate::renders::base::screen::Screen;
-use sdl2::video::{Window, WindowContext};
+use sdl2::video::{WindowContext};
 use crate::events::event::Event;
 use crate::events::event_provider::EventProvider;
 use crate::geometry::position::Position;
@@ -33,7 +30,7 @@ impl<'a> SDLRender<'a> {
       .build()?;
     let canvas = window.into_canvas().build()?;
     let creator = canvas.texture_creator();
-    let mut render = SDLRender {
+    let render = SDLRender {
       screen,
       width,
       height,

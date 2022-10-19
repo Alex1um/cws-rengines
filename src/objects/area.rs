@@ -1,5 +1,4 @@
-use std::any::Any;
-use std::cell::{Cell, RefCell};
+use std::cell::{RefCell};
 use std::error::Error;
 use std::rc::Rc;
 use crate::geometry::position::Position;
@@ -9,7 +8,7 @@ use rustc_hash::FxHashMap;
 pub mod errors {
   use std::error::Error;
   use super::{Position, Area};
-  use std::fmt::{Display, Formatter, write};
+  use std::fmt::{Display, Formatter};
 
   #[derive(Debug)]
   pub struct PositionOutOfRange {
@@ -47,7 +46,7 @@ pub mod errors {
 }
 
 use errors::*;
-use crate::objects::game_object::{GameObjectID, GameObjectRef};
+use crate::objects::game_object::{GameObjectID};
 
 pub type AreaRef = Rc<RefCell<Area>>;
 
