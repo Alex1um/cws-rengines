@@ -34,7 +34,7 @@ impl Hash for Event {
         // k.hash(state);
         1.hash(state);
       }
-      self::Event::Mouse { key: k, pos: Position } => {
+      self::Event::Mouse { key: k, pos: position } => {
         // k.hash(state);
         2.hash(state);
       }
@@ -58,11 +58,11 @@ impl Hash for Event {
 impl PartialEq<Self> for Event {
   fn eq(&self, other: &Self) -> bool {
     return std::mem::discriminant(self) == std::mem::discriminant(other) && match (self, other) {
-      _ => { true }
       (Event::Custom { r#type: t, data: _ },
         Event::Custom { r#type: t2, data: _ }) => {
         t == t2
       }
+      _ => { true }
     };
   }
 }

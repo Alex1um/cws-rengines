@@ -10,8 +10,9 @@ sdl2 = {default-features = false, version="0.35.2", features=["image"]}
 rustc-hash = "1.1.0"
 
 [lib]
+name = "cws_rengines"
 #crate-type = ["staticlib"]
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["cdylib", "staticlib", "lib"]
 
 #[dependencies.sdl2]
 #version = "0.35.2"

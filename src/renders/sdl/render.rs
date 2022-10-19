@@ -13,18 +13,47 @@ use crate::events::event_provider::EventProvider;
 use crate::geometry::position::Position;
 use crate::renders::base::render::Render;
 
-pub struct SDLRender<'a> {
+pub struct SDLTextureHolder<'b> {
+  textures: Vec<Texture<'b>>,
+  texture_creator: &'b TextureCreator<WindowContext>,
+}
+
+impl<'b> SDLTextureHolder<'b> {
+  fn new(render: &SDLRender) -> SDLTextureHolder<'b> {
+    return SDLTextureHolder {
+      textures: vec![],
+      texture_creator: &render.txt_creator,
+    }
+  }
+
+  pub fn load_textures(&mut self, tl: Vec<&str>) {
+    for f in tl {
+      let texture = self.texture_creator.load_texture(f).expect("loaded texture");
+      self.textures.push(texture);
+    }
+  }
+
+  pub fn load_texture(&mut self, tl: &str) {
+    let texture = self.texture_creator.load_texture(tl).expect("loaded texture");
+    self.textures.push(texture);
+  }
+
+}
+
+pub struct SDLRender {
   screen: Screen,
   width: usize,
   height: usize,
   canvas: WindowCanvas,
-  textures: Vec<Texture<'a>>,
   event_pump: EventPump,
+  // textures: Vec<Texture<'a>>,
+  txt_creator: TextureCreator<WindowContext>,
 }
 
 
-impl<'a> SDLRender<'a> {
-  pub fn new(screen: Screen, width: usize, height: usize) -> Result<(TextureCreator<WindowContext>, SDLRender<'a>), Box<dyn Error>> {
+impl SDLRender {
+  pub fn new(screen: Screen, width: usize, height: usize) -> Result<SDLRender, Box<dyn Error>>
+  {
     let context = sdl2::init()?;
     let pump = context.event_pump()?;
     let video = context.video()?;
@@ -37,28 +66,31 @@ impl<'a> SDLRender<'a> {
       width,
       height,
       canvas,
-      textures: Vec::<Texture>::new(),
       event_pump: pump,
+      txt_creator: creator,
     };
-    Ok((creator, render))
+    return Ok(render);
   }
 
   pub fn create_texture_creator(&self) -> TextureCreator<WindowContext> {
     self.canvas.texture_creator()
   }
 
-  pub fn load_textures(&mut self, creator: &'a TextureCreator<WindowContext>, tl: Vec<&str>) {
-    for f in tl {
-      let texture = creator.load_texture(f).expect("loaded texture");
-      self.textures.push(texture);
-    }
-  }
+  // pub fn load_textures(&mut self, creator: &'a TextureCreator<WindowContext>, tl: Vec<&str>) {
+  //   for f in tl {
+  //     let texture = creator.load_texture(f).expect("loaded texture");
+  //     self.textures.push(texture);
+  //   }
+  // }
+  //
+  // pub fn load_texture(&'a mut self, tl: &str) {
+  //   let texture: Texture<'a> = self.txt_creator.load_texture(tl).expect("loaded texture");
+  //   self.textures.push(texture);
+  // }
 }
 
-impl Render for SDLRender<'_> {
+impl Render for SDLRender {
   fn render(&mut self) {
-    // self.canvas.set_draw_color(Color::RGB(0, 0, 0));
-    // self.canvas.clear();
     for v in &self.screen.view_stack {
       let Position { x: xs, y: ys, z: zs } = v.get_pos();
       let area = v.get_area();
@@ -87,7 +119,7 @@ impl Render for SDLRender<'_> {
   }
 }
 
-impl EventProvider for SDLRender<'_> {
+impl EventProvider for SDLRender {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
     buf.append(&mut self.event_pump
       .keyboard_state()
