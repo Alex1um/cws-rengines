@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::error::Error;
 use rustc_hash::FxHashMap;
 use crate::events::event::{Event};
@@ -6,7 +7,7 @@ use crate::objects::area::AreaRef;
 use crate::renders::base::render::Render;
 use std::thread::sleep;
 use std::time::Duration;
-use crate::renders::sdl::render::{Scene, Window};
+use crate::renders::sdl::render::{SceneRef, Window, WindowRef};
 
 #[cfg(target_arch = "wasm32")]
 extern "C" {
@@ -15,15 +16,15 @@ extern "C" {
 
 type EventCallBack = Box<dyn FnMut()>;
 
-pub struct EventLoop<'a, T: Render + Sized + EventProvider> {
-  scene: Scene<'a>,
-  window: &'a mut Window,
+pub struct EventLoop<'a, T: Render + Sized> {
+  scene: SceneRef<'a>,
+  window: WindowRef,
   render: T,
   event_listeners: FxHashMap<Event, Vec<EventCallBack>>,
 }
 
-impl<T> EventLoop<'_, T> where T: Render + Sized + EventProvider {
-  pub fn new<'a>(scene: Scene<'a>, render: T, window: &'a mut Window) -> EventLoop<'a, T> {
+impl<T> EventLoop<'_, T> where T: Render + Sized {
+  pub fn new<'a>(scene: SceneRef<'a>, render: T, window: WindowRef) -> EventLoop<'a, T> {
     EventLoop {
       scene,
       window,
@@ -44,7 +45,7 @@ impl<T> EventLoop<'_, T> where T: Render + Sized + EventProvider {
   pub fn start(&mut self) {
     let mut buf: Vec<Event> = vec![];
     'main_loop: loop {
-      self.window.provide_events(&mut buf);
+      self.window.borrow_mut().provide_events(&mut buf);
       for e in buf.drain(0..buf.len()) {
         if let Some(listeners) = self.event_listeners.get_mut(&e) {
           for listener in listeners {

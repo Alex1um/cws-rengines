@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::error::Error;
+use std::rc::Rc;
 use rustc_hash::FxHashMap;
 use sdl2::image::LoadTexture;
 use sdl2::rect::Rect;
@@ -14,6 +16,8 @@ use crate::renders::base::render::Render;
 
 use crate::objects::game_object::{GameObject, GameObjectID};
 
+pub type Creator = TextureCreator<WindowContext>;
+
 pub struct Scene<'a> {
   pub textures:  Vec<Texture<'a>>,
   area: Area,
@@ -21,22 +25,25 @@ pub struct Scene<'a> {
   _obj_id: GameObjectID,
 }
 
+pub type SceneRef<'a> = Rc<RefCell<Scene<'a>>>;
+
 impl<'a> Scene<'a> {
-  pub fn new(area: Area) -> Scene<'a> {
-    Scene {
+  pub fn new(area: Area) -> SceneRef<'a> {
+    let sc = Scene {
       area,
       textures: vec![],
       objects: FxHashMap::<GameObjectID, GameObject>::default(),
       _obj_id: GameObjectID::default(),
-    }
+    };
+    return Rc::new(RefCell::new(sc));
   }
 
-  fn add_object(&mut self, obj: GameObject) -> GameObjectID {
+  pub fn add_object(&mut self, obj: GameObject) -> Result<GameObjectID, Box<dyn Error>> {
     let id = self._obj_id;
-    self.area.set_pos(obj.get_pos(), id);
+    self.area.try_set_pos(obj.get_pos(), Some(id))?;
     self.objects.insert(self._obj_id, obj);
     self._obj_id += 1;
-    return id;
+    return Ok(id);
   }
 
   fn get_texture(&self, obj_type: i32) -> Option<&Texture<'a>> {
@@ -44,20 +51,36 @@ impl<'a> Scene<'a> {
     return self.textures.get(obj_type as usize);
   }
 
-  pub fn load_textures(&mut self, creator: &'a TextureCreator<WindowContext>, tl: Vec<&str>) {
+  pub fn load_textures<'b: 'a>(&mut self, creator: &'b TextureCreator<WindowContext>, tl: Vec<&str>) {
     for f in tl {
       let texture = creator.load_texture(f).expect("loaded texture");
       self.textures.push(texture);
     }
   }
 
-  pub fn load_texture(&mut self, creator: &'a TextureCreator<WindowContext>, tl: &str) {
+  pub fn load_texture(&mut self, creator: &'static TextureCreator<WindowContext>, tl: &str) {
     let texture = creator.load_texture(tl).expect("loaded texture");
     self.textures.push(texture);
   }
 
   pub fn get(&self, x: usize, y: usize, z: usize) -> Option<&GameObject> {
-    return self.objects.get(&self.area.get_pos(&Position::new(x, y, z)).unwrap());
+    return match &self.area.get_pos(&Position::new(x, y, z)) {
+      None => None,
+      Some(id) => self.objects.get(id),
+    }
+  }
+
+  pub fn get_object_pos(&self, id: GameObjectID) -> Result<Position, Box<dyn Error>> {
+    return Ok(self.objects.get(&id).ok_or::<Box<dyn Error>>("Object not found".into())?.get_pos());
+  }
+
+  pub fn update_object(&mut self, id: GameObjectID, new_pos: Position) -> Result<(), Box<dyn Error>> {
+    let obj = self.objects.get_mut(&id).ok_or("kekw".to_owned())?;
+    let old_pos = obj.get_pos();
+    self.area.try_set_pos(old_pos, None)?;
+    self.area.try_set_pos(new_pos, Some(id))?;
+    obj.set_pos(new_pos);
+    return Ok(());
   }
 
 }
@@ -66,9 +89,11 @@ pub struct Window {
   ctx: Sdl,
   width: usize,
   height: usize,
-  canvas: WindowCanvas,
+  pub canvas: WindowCanvas,
   event_pump: EventPump,
 }
+
+pub type WindowRef = Rc<RefCell<Window>>;
 
 impl Window {
   pub fn new(width: usize, height: usize) -> Result<Window, Box<dyn Error>> {
@@ -87,15 +112,24 @@ impl Window {
     };
     return Ok(w);
   }
+
+  pub fn get_texture_creator(&self) -> TextureCreator<WindowContext> {
+    self.canvas.texture_creator()
+  }
+
+  pub fn create_ref(self) -> WindowRef {
+    Rc::new(RefCell::new(self))
+  }
+
 }
 
-pub struct SDLRender<'a> {
+pub struct SDLRender {
   screen: Screen,
-  window: &'a mut Window,
+  window: WindowRef,
 }
 
-impl<'a> SDLRender<'a> {
-  pub fn new(screen: Screen, window: &mut Window) -> SDLRender
+impl SDLRender {
+  pub fn new(screen: Screen, window: WindowRef) -> SDLRender
   {
     let render = SDLRender {
       screen,
@@ -106,11 +140,11 @@ impl<'a> SDLRender<'a> {
 
 }
 
-impl Render for SDLRender<'_> {
-  fn render(&mut self, scene: &Scene) {
+impl Render for SDLRender {
+  fn render(&mut self, scene: &SceneRef) {
+    let scene = scene.borrow();
     for v in &self.screen.view_stack {
       let Position { x: xs, y: ys, z: zs } = v.get_pos();
-      let area = v.get_area();
       let width = v.get_width();
       let height = v.get_height();
       let layers = v.get_layers();
@@ -126,13 +160,13 @@ impl Render for SDLRender<'_> {
 
               let texture = scene.textures.get(cur_obj.get_type() as usize).expect("texture of object type");
               texture.query();
-              self.window.canvas.copy(texture, None, obj).expect("successful texture write");
+              self.window.borrow_mut().canvas.copy(texture, None, obj).expect("successful texture write");
             }
           }
         }
       }
     }
-    self.window.canvas.present();
+    self.window.borrow_mut().canvas.present();
   }
 }
 

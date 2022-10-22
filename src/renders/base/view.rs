@@ -3,7 +3,6 @@ use crate::geometry::position::Position;
 use crate::objects::area::{AreaRef};
 
 pub struct View {
-  area: AreaRef,
   pos: Position,
   height: usize,
   width: usize,
@@ -11,9 +10,8 @@ pub struct View {
 }
 
 impl View {
-  pub fn new(area: &AreaRef, pos: Position, width: usize, height: usize, layers: usize) -> Self {
+  pub fn new(pos: Position, width: usize, height: usize, layers: usize) -> Self {
     View {
-      area: Rc::clone(area),
       pos,
       height,
       width,
@@ -26,8 +24,4 @@ impl View {
   pub fn get_layers(&self) -> usize { self.layers }
 
   pub fn get_pos(&self) -> Position { self.pos }
-
-  pub fn get_area(&self) -> &AreaRef {
-    return &self.area;
-  }
 }

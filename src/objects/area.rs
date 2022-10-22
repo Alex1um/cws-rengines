@@ -101,17 +101,23 @@ impl Area {
     self.area[new_pos.z][new_pos.y][new_pos.x] = tmp;
   }
 
-  pub fn set_pos(&mut self, pos: Position, id: GameObjectID) {
-    let _ = self.area[pos.z][pos.y][pos.x].insert(id);
+  pub fn set_pos(&mut self, pos: Position, id: Option<GameObjectID>) {
+    self.area[pos.z][pos.y][pos.x] = id;
   }
 
-  pub fn try_set_pos(&mut self, pos: Position, id: GameObjectID) -> Result<(), Box<dyn Error>> {
+  pub fn try_set_pos(&mut self, pos: Position, id: Option<GameObjectID>) -> Result<(), Box<dyn Error>> {
     if self.check_pos_boundaries(&pos) {
-      if let Some(_) = self.get_pos(&pos) {
-        let _ = self.area[pos.z][pos.y][pos.x].insert(id);
-        return Ok(());
+      match id {
+        None => { self.area[pos.z][pos.y][pos.x] = id }
+        Some(_) => {
+          if let Some(_) = self.get_pos(&pos) {
+            return Err("Found Object at this position".into());
+          } else {
+            self.area[pos.z][pos.y][pos.x] = id;
+            return Ok(());
+          }
+        }
       }
-      return Err("Found Object at this position".into())
     }
     return Err(Box::new(PositionOutOfRange::new(pos, self)));
   }

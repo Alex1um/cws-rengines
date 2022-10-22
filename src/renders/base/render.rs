@@ -1,5 +1,5 @@
-use crate::renders::sdl::render::Scene;
+use crate::renders::sdl::render::{SceneRef};
 
 pub trait Render {
-  fn render(&mut self, scene: &Scene);
+  fn render(&mut self, scene: &SceneRef);
 }
