@@ -16,7 +16,7 @@ use crate::events::event_loop::EventLoop;
 
 
 type AreaPtr = *const RefCell<Area>;
-type RenderPtr = *const RefCell<Option<(TextureCreator<WindowContext>, SDLRender<'static>)>>;
+type RenderPtr = *mut (TextureCreator<WindowContext>, SDLRender<'static>);
 
 #[no_mangle]
 unsafe extern "C" fn create_object(area: AreaPtr, x: i32, y: i32, z: i32, r#type: i32) -> GameObjectID {
@@ -49,7 +49,7 @@ unsafe extern "C" fn render_new(area: AreaPtr, res_x: i32, res_y: i32) -> Render
     res_x as usize,
     res_y as usize,
   ).expect("Created Render");
-  return Rc::into_raw(Rc::new(RefCell::new(Some(ptr))));
+  return Box::into_raw(Box::new(ptr));
 }
 
 #[no_mangle]
@@ -58,19 +58,19 @@ extern "C" fn testing() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn load_texture(ctx: &RenderPtr, path: *mut c_char) {
+unsafe extern "C" fn load_texture(ctx: RenderPtr, path: *mut c_char) {
   let path = CString::from_raw(path).into_string().expect("correct c string");
-    // cpy.0.load_texture(&path).expect("Correct texture load");
 }
 
 #[no_mangle]
 unsafe extern "C" fn start_event_loop(area: AreaPtr, ctx: RenderPtr) {
-  let mut rc = Rc::from_raw(ctx);
-  let render = rc.borrow_mut().take().expect("no tnull");
-  println!("creating...");
-  let mut l = EventLoop::new(Rc::from_raw(area), render.1);
-  println!("starting...");
-  l.start();
+  if !area.is_null() && !ctx.is_null() {
+    let (c, r) = *Box::from_raw(ctx);
+    println!("creating...");
+    let mut l = EventLoop::new(Rc::from_raw(area), r);
+    println!("starting...");
+    l.start();
+  }
 }
 
 #[cfg(test)]

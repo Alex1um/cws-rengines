@@ -6,6 +6,7 @@ use crate::objects::area::AreaRef;
 use crate::renders::base::render::Render;
 use std::thread::sleep;
 use std::time::Duration;
+use crate::renders::sdl::render::{Scene, Window};
 
 #[cfg(target_arch = "wasm32")]
 extern "C" {
@@ -14,16 +15,18 @@ extern "C" {
 
 type EventCallBack = Box<dyn FnMut()>;
 
-pub struct EventLoop<T: Render + Sized + EventProvider> {
-  area: AreaRef,
+pub struct EventLoop<'a, T: Render + Sized + EventProvider> {
+  scene: Scene<'a>,
+  window: &'a mut Window,
   render: T,
   event_listeners: FxHashMap<Event, Vec<EventCallBack>>,
 }
 
-impl<T> EventLoop<T> where T: Render + Sized + EventProvider {
-  pub fn new(area: AreaRef, render: T) -> EventLoop<T> {
+impl<T> EventLoop<'_, T> where T: Render + Sized + EventProvider {
+  pub fn new<'a>(scene: Scene<'a>, render: T, window: &'a mut Window) -> EventLoop<'a, T> {
     EventLoop {
-      area,
+      scene,
+      window,
       render,
       event_listeners: FxHashMap::<Event, Vec<EventCallBack>>::default(),
     }
@@ -41,7 +44,7 @@ impl<T> EventLoop<T> where T: Render + Sized + EventProvider {
   pub fn start(&mut self) {
     let mut buf: Vec<Event> = vec![];
     'main_loop: loop {
-      self.render.provide_events(&mut buf);
+      self.window.provide_events(&mut buf);
       for e in buf.drain(0..buf.len()) {
         if let Some(listeners) = self.event_listeners.get_mut(&e) {
           for listener in listeners {
@@ -56,7 +59,7 @@ impl<T> EventLoop<T> where T: Render + Sized + EventProvider {
           listener();
         }
       }
-      self.render.render();
+      self.render.render(&self.scene);
 
       #[cfg(not(target_arch = "wasm32"))]
       sleep(Duration::from_millis(200));
