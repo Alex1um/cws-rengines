@@ -5,7 +5,7 @@ use crate::objects::area::{Area, AreaRef};
 use crate::objects::game_object::{GameObject, GameObjectID};
 use crate::renders::base::screen::Screen;
 use crate::renders::base::view::View;
-use crate::renders::sdl::render::SDLRender;
+use crate::renders::sdl::render::{Scene, SceneRef, SDLRender, Window};
 use std::boxed::Box;
 use std::cell::RefCell;
 use std::env::current_dir;
@@ -15,41 +15,28 @@ use sdl2::image::LoadTexture;
 use crate::events::event_loop::EventLoop;
 
 
-type AreaPtr = *const RefCell<Area>;
-type RenderPtr = *mut (TextureCreator<WindowContext>, SDLRender<'static>);
+type ScenePtr<'a> = *const RefCell<Scene<'a>>;
+type WindowPtr = *const RefCell<Window>;
 
 #[no_mangle]
-unsafe extern "C" fn create_object(area: AreaPtr, x: i32, y: i32, z: i32, r#type: i32) -> GameObjectID {
-  let area = AreaRef::from_raw(area);
+unsafe extern "C" fn create_object(area: ScenePtr, x: i32, y: i32, z: i32, r#type: i32) -> GameObjectID {
+  let area = SceneRef::from_raw(area);
   let obj = GameObject::new(r#type, Position::new(x as CoordsType, y as CoordsType, z as CoordsType));
-  return area.borrow_mut().insert(obj).expect("Successful adding");
+  return area.borrow_mut().add_object(obj).expect("Successful adding");
 }
 
 #[no_mangle]
-extern "C" fn create_area(x: usize, y: usize, z: usize) -> AreaPtr {
-  let rf = Area::new(x, y, z).create_ref();
-  return Rc::into_raw(rf);
+extern "C" fn create_scene(x: usize, y: usize, z: usize) -> ScenePtr<'static> {
+  let rf = Area::new(x, y, z);
+  let scene = Scene::new(rf);
+  return Rc::into_raw(scene);
 }
 
 #[no_mangle]
-unsafe extern "C" fn render_new(area: AreaPtr, res_x: i32, res_y: i32) -> RenderPtr {
-  let area = Rc::from_raw(area);
-  let ptr = SDLRender::new(
-    Screen::new(
-      View::new(
-        &area,
-        Position::new(0, 0, 0),
-        area.borrow().get_size_x(),
-        area.borrow().get_size_y(),
-        area.borrow().get_size_z(),
-      ),
-      (res_x as usize) / area.borrow().get_size_x(),
-      (res_y as usize) / area.borrow().get_size_y(),
-    ),
-    res_x as usize,
-    res_y as usize,
-  ).expect("Created Render");
-  return Box::into_raw(Box::new(ptr));
+extern "C" fn create_window(res_x: i32, res_y: i32) -> WindowPtr {
+  Rc::into_raw(Window::new(res_x as usize, res_y as usize)
+    .expect("Created window")
+    .create_ref())
 }
 
 #[no_mangle]
@@ -58,19 +45,34 @@ extern "C" fn testing() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn load_texture(ctx: RenderPtr, path: *mut c_char) {
+unsafe extern "C" fn load_texture(ctx: ScenePtr, win: WindowPtr, path: *mut c_char) {
+  let scene = Rc::from_raw(ctx);
+  let window = Rc::from_raw(win);
   let path = CString::from_raw(path).into_string().expect("correct c string");
+  scene.borrow_mut().load_texture(window.borrow().get_texture_creator(), &path);
 }
 
 #[no_mangle]
-unsafe extern "C" fn start_event_loop(area: AreaPtr, ctx: RenderPtr) {
-  if !area.is_null() && !ctx.is_null() {
-    let (c, r) = *Box::from_raw(ctx);
-    println!("creating...");
-    let mut l = EventLoop::new(Rc::from_raw(area), r);
-    println!("starting...");
-    l.start();
-  }
+unsafe extern "C" fn start_event_loop(scene: ScenePtr, win: WindowPtr) {
+  println!("creating...");
+  let scene = Rc::from_raw(scene);
+  let win = Rc::from_raw(win);
+  let render = SDLRender::new(
+    Screen::new(
+      View::new(
+        Position::new(0, 0, 0),
+        scene.borrow().get_size_x(),
+        scene.borrow().get_size_y(),
+        scene.borrow().get_size_z(),
+      ),
+      win.borrow().get_width() / scene.borrow().get_size_x(),
+      win.borrow().get_height() / scene.borrow().get_size_y(),
+    ),
+    Rc::clone(&win)
+  );
+  let mut l = EventLoop::new(scene, render, win);
+  println!("starting...");
+  l.start();
 }
 
 #[cfg(test)]

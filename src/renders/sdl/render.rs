@@ -83,6 +83,18 @@ impl<'a> Scene<'a> {
     return Ok(());
   }
 
+  pub fn get_size_y(&self) -> usize {
+    self.area.get_size_y()
+  }
+
+  pub fn get_size_z(&self) -> usize {
+    self.area.get_size_z()
+  }
+
+  pub fn get_size_x(&self) -> usize {
+    self.area.get_size_x()
+  }
+
 }
 
 pub struct Window {
@@ -91,6 +103,7 @@ pub struct Window {
   height: usize,
   pub canvas: WindowCanvas,
   event_pump: EventPump,
+  creator: &'static TextureCreator<WindowContext>
 }
 
 pub type WindowRef = Rc<RefCell<Window>>;
@@ -103,22 +116,33 @@ impl Window {
     let window = video.window("Main", width as u32, height as u32)
       .build()?;
     let canvas = window.into_canvas().build()?;
+    let creator: &'static _ = Box::leak(Box::new(canvas.texture_creator()));
     let w = Window {
       width,
       height,
       canvas,
       event_pump: pump,
       ctx: context,
+      creator
     };
     return Ok(w);
   }
 
-  pub fn get_texture_creator(&self) -> TextureCreator<WindowContext> {
-    self.canvas.texture_creator()
+  pub fn get_texture_creator(&self) -> &'static TextureCreator<WindowContext> {
+    return self.creator;
+    // self.canvas.texture_creator()
   }
 
   pub fn create_ref(self) -> WindowRef {
     Rc::new(RefCell::new(self))
+  }
+
+  pub fn get_width(&self) -> usize {
+    self.width
+  }
+
+  pub fn get_height(&self) -> usize {
+    self.height
   }
 
 }
