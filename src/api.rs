@@ -5,7 +5,7 @@ use crate::objects::area::{Area, AreaRef};
 use crate::objects::game_object::{GameObject, GameObjectID};
 use crate::renders::base::screen::Screen;
 use crate::renders::base::view::View;
-use crate::renders::sdl::render::{Scene, SceneRef, SDLRender, Window};
+use crate::renders::sdl::render::{Scene, SceneRef, SDLRender, Window, WindowRef};
 use std::boxed::Box;
 use std::cell::RefCell;
 use std::env::current_dir;
@@ -15,48 +15,48 @@ use sdl2::image::LoadTexture;
 use crate::events::event_loop::EventLoop;
 
 
-type ScenePtr<'a> = *const RefCell<Scene<'a>>;
-type WindowPtr = *const RefCell<Window>;
+// type ScenePtr<'a> = *const RefCell<Scene<'a>>;
+// type WindowPtr = *const RefCell<Window>;
 
 #[no_mangle]
-unsafe extern "C" fn create_object(area: ScenePtr, x: i32, y: i32, z: i32, r#type: i32) -> GameObjectID {
-  let area = SceneRef::from_raw(area);
+pub unsafe extern "C" fn create_object(area: &SceneRef, x: i32, y: i32, z: i32, r#type: i32) -> GameObjectID {
+  // let area = SceneRef::from_raw(area);
   let obj = GameObject::new(r#type, Position::new(x as CoordsType, y as CoordsType, z as CoordsType));
   return area.borrow_mut().add_object(obj).expect("Successful adding");
 }
 
 #[no_mangle]
-extern "C" fn create_scene(x: usize, y: usize, z: usize) -> ScenePtr<'static> {
+pub extern "C" fn create_scene(x: usize, y: usize, z: usize) -> SceneRef<'static> {
   let rf = Area::new(x, y, z);
   let scene = Scene::new(rf);
-  return Rc::into_raw(scene);
+  return scene;
 }
 
 #[no_mangle]
-extern "C" fn create_window(res_x: i32, res_y: i32) -> WindowPtr {
-  Rc::into_raw(Window::new(res_x as usize, res_y as usize)
+pub extern "C" fn create_window(res_x: i32, res_y: i32) -> WindowRef {
+  return Window::new(res_x as usize, res_y as usize)
     .expect("Created window")
-    .create_ref())
+    .create_ref();
 }
 
 #[no_mangle]
-extern "C" fn testing() {
+pub extern "C" fn testing() {
   println!("HELLO from rust");
 }
 
 #[no_mangle]
-unsafe extern "C" fn load_texture(ctx: ScenePtr, win: WindowPtr, path: *mut c_char) {
-  let scene = Rc::from_raw(ctx);
-  let window = Rc::from_raw(win);
-  let path = CString::from_raw(path).into_string().expect("correct c string");
+pub unsafe extern "C" fn load_texture(scene: &SceneRef, window: &WindowRef, path: *const c_char) {
+  // let scene = Rc::from_raw(ctx);
+  // let window = Rc::from_raw(win);
+  let path = &CStr::from_ptr(path).to_str().expect("correct string");
   scene.borrow_mut().load_texture(window.borrow().get_texture_creator(), &path);
 }
 
 #[no_mangle]
-unsafe extern "C" fn start_event_loop(scene: ScenePtr, win: WindowPtr) {
+pub unsafe extern "C" fn start_event_loop(scene: SceneRef, win: WindowRef) {
   println!("creating...");
-  let scene = Rc::from_raw(scene);
-  let win = Rc::from_raw(win);
+  // let scene = Rc::from_raw(scene);
+  // let win = Rc::from_raw(win);
   let render = SDLRender::new(
     Screen::new(
       View::new(
