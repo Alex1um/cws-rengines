@@ -1,19 +1,16 @@
-use sdl2::render::{RendererContext, TextureCreator};
-use sdl2::video::WindowContext;
 use crate::geometry::position::{CoordsType, Position};
-use crate::objects::area::{Area, AreaRef};
+use crate::objects::area::{Area};
 use crate::objects::game_object::{GameObject, GameObjectID};
 use crate::renders::base::screen::Screen;
 use crate::renders::base::view::View;
-use crate::renders::sdl::render::{Scene, SceneRef, SDLRender, Window, WindowRef};
 use std::boxed::Box;
-use std::cell::RefCell;
-use std::env::current_dir;
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{c_char, CStr};
 use std::rc::Rc;
-use sdl2::image::LoadTexture;
 use crate::events::event::Event;
 use crate::events::event_loop::EventLoop;
+use crate::renders::sdl::render::SDLRender;
+use crate::renders::sdl::scene::{Scene, SceneRef};
+use crate::renders::sdl::window::{Window, WindowRef};
 
 
 // type ScenePtr<'a> = *const RefCell<Scene<'a>>;

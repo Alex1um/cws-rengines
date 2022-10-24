@@ -2,8 +2,6 @@ use std::cell::{RefCell};
 use std::error::Error;
 use std::rc::Rc;
 use crate::geometry::position::Position;
-use super::game_object::GameObject;
-use rustc_hash::FxHashMap;
 
 pub mod errors {
   use std::error::Error;

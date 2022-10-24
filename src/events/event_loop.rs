@@ -1,13 +1,12 @@
-use std::borrow::Borrow;
 use std::error::Error;
 use rustc_hash::FxHashMap;
 use crate::events::event::{Event};
 use crate::events::event_provider::EventProvider;
-use crate::objects::area::AreaRef;
 use crate::renders::base::render::Render;
 use std::thread::sleep;
 use std::time::Duration;
-use crate::renders::sdl::render::{SceneRef, Window, WindowRef};
+use crate::renders::sdl::scene::SceneRef;
+use crate::renders::sdl::window::WindowRef;
 
 #[cfg(target_arch = "wasm32")]
 extern "C" {

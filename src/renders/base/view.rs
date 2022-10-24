@@ -1,6 +1,4 @@
-use std::rc::Rc;
 use crate::geometry::position::Position;
-use crate::objects::area::{AreaRef};
 
 pub struct View {
   pos: Position,
