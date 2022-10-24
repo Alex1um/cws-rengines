@@ -85,6 +85,8 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: WindowRef) -> Box
   return l;
   // println!("starting...");
   // l.start();
+
+
 }
 
 #[no_mangle]
@@ -96,7 +98,13 @@ extern "C" fn add_event_listener(eloop: &mut Box<EventLoop<SDLRender>>, callback
 
 #[no_mangle]
 extern "C" fn start_event_loop(mut eloop: Box<EventLoop<SDLRender>>) {
+  println!("starting...");
   eloop.start();
+}
+
+#[no_mangle]
+extern "C" fn change_type(scene: &SceneRef, id: GameObjectID, new_type: i32) {
+  scene.borrow_mut().get_by_id(id).expect("correct id").set_type(new_type);
 }
 
 #[cfg(test)]

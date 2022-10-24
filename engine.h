@@ -29,4 +29,6 @@ extern void remove_object(void **scene, unsigned int obj_id);
 
 extern void *clone_scene(void **scene);
 
+extern void change_type(void **scene, unsigned long obj_id, int new_type);
+
 #endif //CWS_RENGINES__ENGINE_H_

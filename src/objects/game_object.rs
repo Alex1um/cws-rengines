@@ -28,4 +28,7 @@ impl GameObject {
   pub fn get_type(&self) -> i32 {
     return self.r#type;
   }
+  pub fn set_type(&mut self, new_type: i32) {
+    self.r#type = new_type;
+  }
 }

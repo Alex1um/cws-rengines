@@ -71,6 +71,17 @@ impl<'a> Scene<'a> {
     }
   }
 
+  pub fn get_by_pos(&self, pos: Position) -> Option<&GameObject> {
+    return match &self.area.get_pos(&pos) {
+      None => None,
+      Some(id) => self.objects.get(id),
+    }
+  }
+
+  pub fn get_by_id(&mut self, id: GameObjectID) -> Option<&mut GameObject> {
+    return self.objects.get_mut(&id);
+  }
+
   pub fn get_object_pos(&self, id: GameObjectID) -> Result<Position, Box<dyn Error>> {
     return Ok(self.objects.get(&id).ok_or::<Box<dyn Error>>("Object not found".into())?.get_pos());
   }
