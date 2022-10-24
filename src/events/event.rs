@@ -26,8 +26,8 @@ impl Hash for Event {
   fn hash<H: Hasher>(&self, state: &mut H) {
     match self {
       self::Event::Custom { r#type: d, data: _ } => {
-        d.hash(state);
         3.hash(state);
+        d.hash(state);
       }
       self::Event::KeyBoard { key: _ } => {
         // k.hash(state);

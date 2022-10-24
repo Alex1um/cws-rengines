@@ -6,6 +6,7 @@ use sdl2::image::LoadTexture;
 use sdl2::rect::Rect;
 use sdl2::render::{Texture, TextureCreator, WindowCanvas};
 use sdl2::{EventPump, Sdl};
+use sdl2::pixels::Color;
 use crate::renders::base::screen::Screen;
 use sdl2::video::{WindowContext};
 use crate::events::event::Event;
@@ -72,6 +73,13 @@ impl<'a> Scene<'a> {
 
   pub fn get_object_pos(&self, id: GameObjectID) -> Result<Position, Box<dyn Error>> {
     return Ok(self.objects.get(&id).ok_or::<Box<dyn Error>>("Object not found".into())?.get_pos());
+  }
+
+  pub fn remove_object(&mut self, id: GameObjectID) {
+    let mut obj = self.objects.remove(&id);
+    if let Some(o) = obj {
+      self.area.set_pos(o.get_pos(), None);
+    }
   }
 
   pub fn update_object(&mut self, id: GameObjectID, new_pos: Position) -> Result<(), Box<dyn Error>> {
@@ -166,6 +174,7 @@ impl SDLRender {
 
 impl Render for SDLRender {
   fn render(&mut self, scene: &SceneRef) {
+    self.window.borrow_mut().canvas.clear();
     let scene = scene.borrow();
     for v in &self.screen.view_stack {
       let Position { x: xs, y: ys, z: zs } = v.get_pos();
