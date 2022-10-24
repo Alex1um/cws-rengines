@@ -21,3 +21,4 @@ crate-type = ["cdylib", "staticlib", "lib"]
 
 [features]
 api = []
+provide_dbg = []

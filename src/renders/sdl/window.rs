@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::error::Error;
+use sdl2::keyboard::Keycode;
 use std::rc::Rc;
 use sdl2::render::{TextureCreator, WindowCanvas};
 use sdl2::{EventPump, Sdl};
@@ -59,10 +60,21 @@ impl Window {
 
 impl EventProvider for Window {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
+    for _ in self.event_pump.poll_iter() {
+      // println!("new event! {:?}", event);
+    }
     buf.append(&mut self.event_pump
       .keyboard_state()
       .pressed_scancodes()
-      .map(|e| Event::KeyBoard { key: e as i32 })
+      .filter_map(Keycode::from_scancode)
+      .map(|e| {
+
+        #[cfg(feature = "provide_dbg")]
+        println!("key: {}; code: {}", e.name(), e as i32);
+
+        Event::KeyBoard { key: e as i32 }
+      }
+      )
       .collect());
   }
 }
