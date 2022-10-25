@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::error::Error;
-use sdl2::keyboard::Keycode;
 use std::rc::Rc;
 use sdl2::render::{TextureCreator, WindowCanvas};
 use sdl2::{EventPump, Sdl};

@@ -1,8 +1,6 @@
 use std::any::Any;
-use std::ffi::c_void;
 use std::mem::ManuallyDrop;
 use crate::events::event::Event;
-use crate::geometry::position::Position;
 
 #[repr(C)]
 struct CEventKeyboard {
