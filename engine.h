@@ -5,7 +5,7 @@
 #ifndef CWS_RENGINES__ENGINE_H_
 #define CWS_RENGINES__ENGINE_H_
 
-extern enum EventType {
+enum EventType {
   Keyboard,
   Mouse,
   Custom,
@@ -14,7 +14,7 @@ extern enum EventType {
   Loop,
 };
 
-extern union EventContainer {
+union EventContainer {
   struct {
     int key;
   } keyboard;
@@ -38,7 +38,7 @@ extern union EventContainer {
   } loop;
 };
 
-extern struct Event {
+struct Event {
   EventType type;
   EventContainer event;
 };

@@ -43,8 +43,9 @@ impl Hash for Event {
         3.hash(state);
         d.hash(state);
       }
-      Event::KeyBoard { key: _ } => {
+      Event::KeyBoard { key } => {
         // k.hash(state);
+        key.hash(state);
         1.hash(state);
       }
       Event::Mouse { key: _, pos: _ } => {
