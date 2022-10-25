@@ -4,6 +4,7 @@ use sdl2::keyboard::Keycode;
 use std::rc::Rc;
 use sdl2::render::{TextureCreator, WindowCanvas};
 use sdl2::{EventPump, Sdl};
+use sdl2::event::Event as SDLEvent;
 use sdl2::video::WindowContext;
 use crate::events::event::Event;
 use crate::events::event_provider::EventProvider;
@@ -14,7 +15,7 @@ pub struct Window {
   height: usize,
   pub canvas: WindowCanvas,
   event_pump: EventPump,
-  creator: &'static TextureCreator<WindowContext>
+  creator: &'static TextureCreator<WindowContext>,
 }
 
 pub type WindowRef = Rc<RefCell<Window>>;
@@ -34,7 +35,7 @@ impl Window {
       canvas,
       event_pump: pump,
       ctx: context,
-      creator
+      creator,
     };
     return Ok(w);
   }
@@ -55,26 +56,34 @@ impl Window {
   pub fn get_height(&self) -> usize {
     self.height
   }
-
 }
 
 impl EventProvider for Window {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
-    for _ in self.event_pump.poll_iter() {
+    for e in self.event_pump.poll_iter().take(10) {
+      match e {
+        SDLEvent::KeyDown { keycode, .. } => {
+          let keycode = keycode.unwrap();
+          buf.push(Event::KeyBoard { key: keycode as i32 });
+
+          #[cfg(feature = "provide_dbg")]
+          println!("key: {}; code: {}", keycode.name(), keycode as i32);
+
+        }
+        _ => {}
+      }
       // println!("new event! {:?}", event);
     }
-    buf.append(&mut self.event_pump
-      .keyboard_state()
-      .pressed_scancodes()
-      .filter_map(Keycode::from_scancode)
-      .map(|e| {
-
-        #[cfg(feature = "provide_dbg")]
-        println!("key: {}; code: {}", e.name(), e as i32);
-
-        Event::KeyBoard { key: e as i32 }
-      }
-      )
-      .collect());
+    // buf.append(&mut self.event_pump
+    //   .keyboard_state()
+    //   .pressed_scancodes()
+    //   .filter_map(Keycode::from_scancode)
+    //   .map(|e| {
+    //
+    //
+    //     Event::KeyBoard { key: e as i32 }
+    //   }
+    //   )
+    //   .collect());
   }
 }

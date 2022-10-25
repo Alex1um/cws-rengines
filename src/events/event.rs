@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::hash::{Hash, Hasher};
 use crate::geometry::position::Position;
 
@@ -11,39 +12,52 @@ pub enum Event {
   },
   Custom {
     r#type: i32,
-    data: Box<[u8]>,
+    data: Box<dyn Any>,
   },
   ServerSync {
-    data: Box<[u8]>,
+    data: Box<dyn Any>,
   },
   Message {
-    data: Box<[u8]>,
+    data: Box<dyn Any>,
   },
   Loop,
+}
+
+impl Event {
+  pub(crate) fn get_hasher(&self) -> Event {
+    match self {
+      Event::KeyBoard { key } => Event::KeyBoard { key: *key },
+      Event::Mouse { key, pos } => Event::Mouse { key: *key, pos: *pos },
+      Event::Loop => Event::Loop,
+      Event::Custom { r#type, .. } => Event::Custom { r#type: *r#type, data: Box::new(()) },
+      Event::ServerSync { .. } => Event::ServerSync { data: Box::new(()) },
+      Event::Message { .. } => Event::Message { data: Box::new(()) }
+    }
+  }
 }
 
 impl Hash for Event {
   fn hash<H: Hasher>(&self, state: &mut H) {
     match self {
-      self::Event::Custom { r#type: d, data: _ } => {
+      Event::Custom { r#type: d, data: _ } => {
         3.hash(state);
         d.hash(state);
       }
-      self::Event::KeyBoard { key: _ } => {
+      Event::KeyBoard { key: _ } => {
         // k.hash(state);
         1.hash(state);
       }
-      self::Event::Mouse { key: _, pos: _ } => {
+      Event::Mouse { key: _, pos: _ } => {
         // k.hash(state);
         2.hash(state);
       }
-      self::Event::ServerSync { data: _ } => {
+      Event::ServerSync { data: _ } => {
         4.hash(state);
       }
-      self::Event::Message { data: _ } => {
+      Event::Message { data: _ } => {
         5.hash(state);
       }
-      self::Event::Loop => {
+      Event::Loop => {
         0.hash(state);
       }
     }

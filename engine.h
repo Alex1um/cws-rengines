@@ -5,11 +5,51 @@
 #ifndef CWS_RENGINES__ENGINE_H_
 #define CWS_RENGINES__ENGINE_H_
 
-typedef void (*Callback)(void);
+extern enum EventType {
+  Keyboard,
+  Mouse,
+  Custom,
+  Sync,
+  Msg,
+  Loop,
+};
+
+extern union EventContainer {
+  struct {
+    int key;
+  } keyboard;
+  struct {
+    int key;
+    int x;
+    int y;
+  } mouse;
+  struct {
+    int type;
+    void *data;
+  } custom;
+  struct {
+    void *data;
+  } server_sync;
+  struct {
+    void *data;
+  } server_msg;
+  struct {
+    unsigned long ticks;
+  } loop;
+};
+
+extern struct Event {
+  EventType type;
+  EventContainer event;
+};
+
+typedef void (*Callback)(Event);
 
 extern unsigned int create_object(void **scene, int x, int y, int z, int type);
 
-extern void *const create_scene(unsigned long x, unsigned long y, unsigned long z);
+extern void *const create_scene(unsigned long x,
+                                unsigned long y,
+                                unsigned long z);
 
 extern void *const create_window(int res_x, int res_y);
 
@@ -24,6 +64,8 @@ extern void *create_event_loop(void **scene, void *window);
 extern void start_event_loop(void *loop);
 
 extern void add_event_listener(void **loop, Callback callback);
+
+extern void add_keyboard_listener(void **loop, int key, Callback callback);
 
 extern void remove_object(void **scene, unsigned int obj_id);
 

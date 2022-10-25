@@ -6,6 +6,7 @@ use crate::renders::base::view::View;
 use std::boxed::Box;
 use std::ffi::{c_char, CStr};
 use std::rc::Rc;
+use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::EventLoop;
 use crate::renders::sdl::render::SDLRender;
@@ -87,10 +88,23 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: WindowRef) -> Box
 }
 
 #[no_mangle]
-extern "C" fn add_event_listener(eloop: &mut Box<EventLoop<SDLRender>>, callback: extern "C" fn()) {
-  let clos = move || callback();
+extern "C" fn add_event_listener(eloop: &mut Box<EventLoop<SDLRender>>, callback: extern "C" fn(CEvent)) {
+  let clos = move |e: &Event| {
+    let ce = e.create_c();
+    callback(ce)
+  };
   let boxed = Box::new(clos);
   eloop.add_event_listener(Event::Loop, boxed).expect("added callback");
+}
+
+#[no_mangle]
+extern "C" fn add_keyboard_listener(eloop: &mut Box<EventLoop<SDLRender>>, key: i32, callback: extern "C" fn(CEvent)) {
+  let clos = move |e: &Event| {
+    let ce = e.create_c();
+    callback(ce)
+  };
+  let boxed = Box::new(clos);
+  eloop.add_event_listener(Event::KeyBoard {key}, boxed).expect("added callback");
 }
 
 #[no_mangle]

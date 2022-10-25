@@ -13,7 +13,7 @@ extern "C" {
   fn emscripten_sleep(ms: u32);
 }
 
-type EventCallBack = Box<dyn FnMut()>;
+type EventCallBack = Box<dyn FnMut(&Event)>;
 
 pub struct EventLoop<'a, T: Render + Sized> {
   scene: SceneRef<'a>,
@@ -46,17 +46,16 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
     'main_loop: loop {
       self.window.borrow_mut().provide_events(&mut buf);
       for e in buf.drain(0..buf.len()) {
+        // let hash = e.get_hasher();
         if let Some(listeners) = self.event_listeners.get_mut(&e) {
           for listener in listeners {
-            // listener(&mut self.render as &mut dyn Render);
-            listener();
+            listener(&e);
           }
         }
       }
       if let Some(listeners) = self.event_listeners.get_mut(&Event::Loop) {
         for listener in listeners {
-          // listener(&mut self.render as &mut dyn Render);
-          listener();
+          listener(&Event::Loop);
         }
       }
       self.render.render(&self.scene);
