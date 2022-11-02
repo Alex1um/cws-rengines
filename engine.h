@@ -73,4 +73,6 @@ extern void *clone_scene(void **scene);
 
 extern void change_type(void **scene, unsigned long obj_id, int new_type);
 
+extern void output_file(const char *file_name);
+
 #endif //CWS_RENGINES__ENGINE_H_

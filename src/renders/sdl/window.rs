@@ -21,6 +21,8 @@ pub type WindowRef = Rc<RefCell<Window>>;
 
 impl Window {
   pub fn new(width: usize, height: usize) -> Result<Window, Box<dyn Error>> {
+    println!("kb element setted: {}", sdl2::hint::set("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas"));
+    // println!("kb element setted: {}", sdl2::hint::set("SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas"));
     let context = sdl2::init()?;
     let pump = context.event_pump()?;
     let video = context.video()?;

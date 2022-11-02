@@ -4,7 +4,10 @@ use crate::objects::game_object::{GameObject, GameObjectID};
 use crate::renders::base::screen::Screen;
 use crate::renders::base::view::View;
 use std::boxed::Box;
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, CString};
+use std::fs::File;
+use std::io::BufReader;
+use std::io::prelude::{Read};
 use std::rc::Rc;
 use crate::events::cevent::CEvent;
 use crate::events::event::Event;
@@ -117,6 +120,21 @@ extern "C" fn start_event_loop(mut eloop: Box<EventLoop<SDLRender>>) {
 extern "C" fn change_type(scene: &SceneRef, id: GameObjectID, new_type: i32) {
   scene.borrow_mut().get_by_id(id).expect("correct id").set_type(new_type);
 }
+
+#[cfg(target_os = "emscripten")]
+extern "C" { fn emscripten_run_script(script: *const c_char); }
+
+#[cfg(target_os = "emscripten")]
+#[no_mangle]
+unsafe extern "C" fn output_file(fname: *const c_char) {
+  let path = &CStr::from_ptr(fname).to_str().expect("correct string");
+  let command = CString::new(format!("download_generated('{}')", path)).expect("correct pth and c5tring");
+  emscripten_run_script(command.as_ptr());
+}
+
+#[cfg(not(target_os = "emscripten"))]
+#[no_mangle]
+extern "C" fn output_file(fname: *const c_char) {}
 
 #[cfg(test)]
 mod objects_tests {
