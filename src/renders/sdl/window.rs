@@ -21,7 +21,7 @@ pub type WindowRef = Rc<RefCell<Window>>;
 
 impl Window {
   pub fn new(width: usize, height: usize) -> Result<Window, Box<dyn Error>> {
-    println!("kb element setted: {}", sdl2::hint::set("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas"));
+    sdl2::hint::set("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas");
     // println!("kb element setted: {}", sdl2::hint::set("SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas"));
     let context = sdl2::init()?;
     let pump = context.event_pump()?;
@@ -59,6 +59,23 @@ impl Window {
   }
 }
 
+impl EventProvider for WindowRef {
+  fn provide_events(&mut self, buf: &mut Vec<Event>) {
+    for e in self.borrow_mut().event_pump.poll_iter().take(10) {
+      match e {
+        SDLEvent::KeyDown { keycode, .. } => {
+          let keycode = keycode.unwrap();
+          buf.push(Event::KeyBoard { key: keycode as i32 });
+
+          #[cfg(feature = "provide_dbg")]
+          println!("key: {}; code: {}", keycode.name(), keycode as i32);
+        }
+        _ => {}
+      }
+    }
+  }
+}
+
 impl EventProvider for Window {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
     for e in self.event_pump.poll_iter().take(10) {
@@ -69,7 +86,6 @@ impl EventProvider for Window {
 
           #[cfg(feature = "provide_dbg")]
           println!("key: {}; code: {}", keycode.name(), keycode as i32);
-
         }
         _ => {}
       }

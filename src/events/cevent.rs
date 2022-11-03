@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::mem::ManuallyDrop;
 use crate::events::event::Event;
+use crate::geometry::position::Position;
 
 #[repr(C)]
 struct CEventKeyboard {
@@ -17,17 +18,17 @@ struct CEventMouse {
 #[repr(C)]
 struct CEventCustom {
   r#type: i32,
-  data: *const Box<dyn Any>,
+  data: *const dyn Any,
 }
 
 #[repr(C)]
 struct CEventServerSync {
-  data: *const Box<dyn Any>,
+  data: *const dyn Any,
 }
 
 #[repr(C)]
 struct CEventMessage {
-  data: *const Box<dyn Any>,
+  data: *const dyn Any,
 }
 
 #[repr(C)]
@@ -46,7 +47,6 @@ pub union CEventContainer {
 }
 
 #[repr(i32)]
-#[derive(Hash)]
 pub enum CEventType {
   Keyboard,
   Mouse,
@@ -64,7 +64,42 @@ pub struct CEvent {
 
 
 impl Event {
-  pub(crate) fn create_c(&self) -> CEvent {
+  pub(crate) fn from_c(ce: CEvent) -> Event {
+    unsafe {
+      match ce.r#type {
+        CEventType::Keyboard => {
+          Event::KeyBoard {
+            key: ce.event.keyboard.key,
+          }
+        }
+        CEventType::Mouse => {
+          Event::Mouse {
+            pos: Position::new(ce.event.mouse.x as usize, ce.event.mouse.y as usize, 0),
+            key: ce.event.mouse.key,
+          }
+        },
+        CEventType::Custom => {
+          Event::Custom {
+            data: Box::new(ce.event.custom.data),
+            r#type: ce.event.custom.r#type,
+          }
+        },
+        CEventType::Sync => {
+          Event::ServerSync {
+            data: Box::new(ce.event.server_sync.data),
+          }
+        },
+        CEventType::Msg => {
+          Event::Message {
+            data: Box::new(ce.event.server_msg.data),
+          }
+        },
+        CEventType::Loop => { Event::Loop },
+      }
+    }
+  }
+
+  pub(crate) fn to_c(&self) -> CEvent {
     match self {
       Event::Custom { r#type, data } => {
         CEvent {

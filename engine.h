@@ -43,7 +43,7 @@ struct Event {
   EventContainer event;
 };
 
-typedef void (*Callback)(Event);
+typedef void (*Callback)(Event, void **event_provider);
 
 extern unsigned int create_object(void **scene, int x, int y, int z, int type);
 
@@ -59,11 +59,13 @@ extern void test_string(char *str);
 
 extern void load_texture(void **scene, void **window, char *path);
 
-extern void *create_event_loop(void **scene, void *window);
+extern void *create_event_loop(void **scene, void **window);
+
+extern void throw_event(void **event_provider, Event event);
 
 extern void start_event_loop(void *loop);
 
-extern void add_event_listener(void **loop, Callback callback);
+extern void add_event_listener(void **loop, Event event, Callback callback);
 
 extern void add_keyboard_listener(void **loop, int key, Callback callback);
 

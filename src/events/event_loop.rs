@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::error::Error;
+use std::rc::Rc;
 use rustc_hash::FxHashMap;
 use crate::events::event::{Event};
 use crate::events::event_provider::EventProvider;
@@ -6,29 +8,35 @@ use crate::renders::base::render::Render;
 use std::thread::sleep;
 use std::time::Duration;
 use crate::renders::sdl::scene::SceneRef;
-use crate::renders::sdl::window::WindowRef;
 
 #[cfg(target_arch = "wasm32")]
 extern "C" {
   fn emscripten_sleep(ms: u32);
 }
 
-type EventCallBack = Box<dyn FnMut(&Event)>;
+impl EventProvider for Vec<Event> {
+  fn provide_events(&mut self, buf: &mut Vec<Event>) {
+    buf.extend(self.drain(..));
+  }
+}
+pub type InLoopProviderRef<'a> = &'a mut Vec<Event>;
+
+type EventCallBack = Box<dyn FnMut(&Event, InLoopProviderRef)>;
 
 pub struct EventLoop<'a, T: Render + Sized> {
   scene: SceneRef<'a>,
-  window: WindowRef,
   render: T,
   event_listeners: FxHashMap<Event, Vec<EventCallBack>>,
+  event_providers: Vec<Rc<RefCell<dyn EventProvider>>>,
 }
 
 impl<T> EventLoop<'_, T> where T: Render + Sized {
-  pub fn new<'a>(scene: SceneRef<'a>, render: T, window: WindowRef) -> EventLoop<'a, T> {
+  pub fn new(scene: SceneRef, render: T) -> EventLoop<T> {
     EventLoop {
       scene,
-      window,
       render,
       event_listeners: FxHashMap::<Event, Vec<EventCallBack>>::default(),
+      event_providers: vec![],
     }
   }
 
@@ -41,21 +49,29 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
     Ok(())
   }
 
+  pub fn add_event_provider(&mut self, provider: Rc<RefCell<dyn EventProvider>>) {
+    self.event_providers.push(provider);
+  }
+
   pub fn start(&mut self) {
     let mut buf: Vec<Event> = vec![];
+    let mut inlp = Vec::<Event>::new();
     'main_loop: loop {
-      self.window.borrow_mut().provide_events(&mut buf);
+      for provider in &self.event_providers {
+        provider.borrow_mut().provide_events(&mut buf);
+      }
+      buf.extend(inlp.drain(..));
+      // self.window.borrow_mut().provide_events(&mut buf);
       for e in buf.drain(0..buf.len()) {
-        // let hash = e.get_hasher();
         if let Some(listeners) = self.event_listeners.get_mut(&e) {
           for listener in listeners {
-            listener(&e);
+            listener(&e, &mut inlp);
           }
         }
       }
       if let Some(listeners) = self.event_listeners.get_mut(&Event::Loop) {
         for listener in listeners {
-          listener(&Event::Loop);
+          listener(&Event::Loop, &mut inlp);
         }
       }
       self.render.render(&self.scene);

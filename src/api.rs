@@ -4,6 +4,7 @@ use crate::objects::game_object::{GameObject, GameObjectID};
 use crate::renders::base::screen::Screen;
 use crate::renders::base::view::View;
 use std::boxed::Box;
+use std::cell::RefCell;
 use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
 use std::io::BufReader;
@@ -11,7 +12,8 @@ use std::io::prelude::{Read};
 use std::rc::Rc;
 use crate::events::cevent::CEvent;
 use crate::events::event::Event;
-use crate::events::event_loop::EventLoop;
+use crate::events::event_loop::{EventLoop, InLoopProviderRef};
+use crate::events::event_provider::EventProvider;
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -65,7 +67,7 @@ extern "C" fn clone_scene<'a>(scene: &SceneRef<'a>) -> SceneRef<'a> {
 }
 
 #[no_mangle]
-extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: WindowRef) -> Box<EventLoop<'a, SDLRender>> {
+extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef) -> Box<EventLoop<'a, SDLRender>> {
   println!("creating...");
   // let scene = Rc::from_raw(scene);
   // let win = Rc::from_raw(win);
@@ -82,7 +84,9 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: WindowRef) -> Box
     ),
     Rc::clone(&win),
   );
-  let l = Box::new(EventLoop::new(Rc::clone(scene), render, win));
+  let mut l = Box::new(EventLoop::new(Rc::clone(scene), render));
+  let link = Rc::clone(win);
+  l.add_event_provider(link);
   return l;
   // println!("starting...");
   // l.start();
@@ -91,23 +95,28 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: WindowRef) -> Box
 }
 
 #[no_mangle]
-extern "C" fn add_event_listener(eloop: &mut Box<EventLoop<SDLRender>>, callback: extern "C" fn(CEvent)) {
-  let clos = move |e: &Event| {
-    let ce = e.create_c();
-    callback(ce)
+extern "C" fn add_event_listener(eloop: &mut Box<EventLoop<SDLRender>>, ce: CEvent, callback: extern "C" fn(CEvent, InLoopProviderRef)) {
+  let clos = move |e: &Event, p: InLoopProviderRef| {
+    let ce = e.to_c();
+    callback(ce, p)
   };
   let boxed = Box::new(clos);
-  eloop.add_event_listener(Event::Loop, boxed).expect("added callback");
+  eloop.add_event_listener(Event::from_c(ce), boxed).expect("added callback");
 }
 
 #[no_mangle]
-extern "C" fn add_keyboard_listener(eloop: &mut Box<EventLoop<SDLRender>>, key: i32, callback: extern "C" fn(CEvent)) {
-  let clos = move |e: &Event| {
-    let ce = e.create_c();
-    callback(ce)
+extern "C" fn add_keyboard_listener(eloop: &mut Box<EventLoop<SDLRender>>, key: i32, callback: extern "C" fn(CEvent, InLoopProviderRef)) {
+  let clos = move |e: &Event, provider: InLoopProviderRef| {
+    let ce = e.to_c();
+    callback(ce, provider)
   };
   let boxed = Box::new(clos);
   eloop.add_event_listener(Event::KeyBoard {key}, boxed).expect("added callback");
+}
+
+#[no_mangle]
+extern "C" fn throw_event(prov: InLoopProviderRef, e: CEvent) {
+  prov.push(Event::from_c(e));
 }
 
 #[no_mangle]
@@ -134,7 +143,7 @@ unsafe extern "C" fn output_file(fname: *const c_char) {
 
 #[cfg(not(target_os = "emscripten"))]
 #[no_mangle]
-extern "C" fn output_file(fname: *const c_char) {}
+extern "C" fn output_file(_: *const c_char) {}
 
 #[cfg(test)]
 mod objects_tests {

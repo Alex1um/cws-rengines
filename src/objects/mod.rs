@@ -5,7 +5,6 @@ pub mod game_object;
 mod objects_tests {
   use crate::geometry::position::Position;
   use crate::objects::area::*;
-  use crate::objects::game_object::*;
 
   #[test]
   fn area_insert() {
