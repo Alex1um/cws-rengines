@@ -1,201 +1,265 @@
 <!doctype html>
 <html lang="en-us">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Emscripten-Generated Code</title>
     <style>
-      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-      textarea.emscripten, input.emscripten { font-family: monospace; width: 80%; }
-      div.emscripten { text-align: center; }
-      div.emscripten_border { border: 1px solid black; }
-      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; background-color: black; }
+        .emscripten {
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
 
-      .spinner {
-        height: 50px;
-        width: 50px;
-        margin: 0px auto;
-        -webkit-animation: rotation .8s linear infinite;
-        -moz-animation: rotation .8s linear infinite;
-        -o-animation: rotation .8s linear infinite;
-        animation: rotation 0.8s linear infinite;
-        border-left: 10px solid rgb(0,150,240);
-        border-right: 10px solid rgb(0,150,240);
-        border-bottom: 10px solid rgb(0,150,240);
-        border-top: 10px solid rgb(100,0,200);
-        border-radius: 100%;
-        background-color: rgb(200,100,250);
-      }
-      @-webkit-keyframes rotation {
-        from {-webkit-transform: rotate(0deg);}
-        to {-webkit-transform: rotate(360deg);}
-      }
-      @-moz-keyframes rotation {
-        from {-moz-transform: rotate(0deg);}
-        to {-moz-transform: rotate(360deg);}
-      }
-      @-o-keyframes rotation {
-        from {-o-transform: rotate(0deg);}
-        to {-o-transform: rotate(360deg);}
-      }
-      @keyframes rotation {
-        from {transform: rotate(0deg);}
-        to {transform: rotate(360deg);}
-      }
+        textarea.emscripten, input.emscripten {
+            font-family: monospace;
+            width: 80%;
+        }
+
+        div.emscripten {
+            text-align: center;
+        }
+
+        div.emscripten_border {
+            border: 1px solid black;
+        }
+
+        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+        canvas.emscripten {
+            border: 0px none;
+            background-color: black;
+        }
+
+        .spinner {
+            height: 50px;
+            width: 50px;
+            margin: 0px auto;
+            -webkit-animation: rotation .8s linear infinite;
+            -moz-animation: rotation .8s linear infinite;
+            -o-animation: rotation .8s linear infinite;
+            animation: rotation 0.8s linear infinite;
+            border-left: 10px solid rgb(0, 150, 240);
+            border-right: 10px solid rgb(0, 150, 240);
+            border-bottom: 10px solid rgb(0, 150, 240);
+            border-top: 10px solid rgb(100, 0, 200);
+            border-radius: 100%;
+            background-color: rgb(200, 100, 250);
+        }
+
+        @-webkit-keyframes rotation {
+            from {
+                -webkit-transform: rotate(0deg);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        @-moz-keyframes rotation {
+            from {
+                -moz-transform: rotate(0deg);
+            }
+            to {
+                -moz-transform: rotate(360deg);
+            }
+        }
+
+        @-o-keyframes rotation {
+            from {
+                -o-transform: rotate(0deg);
+            }
+            to {
+                -o-transform: rotate(360deg);
+            }
+        }
+
+        @keyframes rotation {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
     </style>
-  </head>
-  <body>
-    <hr/>
-    <figure style="overflow:visible;" id="spinner"><div class="spinner"></div><center style="margin-top:0.5em"><strong>emscripten</strong></center></figure>
-    <div class="emscripten" id="status">Downloading...</div>
-    <div class="emscripten">
-      <progress value="0" max="100" id="progress" hidden=1></progress>  
-    </div>
-    <div class="emscripten_border">
-      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
-    </div>
-    <hr/>
-    <div class="emscripten">
-      <input type="checkbox" id="resize">Resize canvas
-      <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
-      &nbsp;&nbsp;&nbsp;
-      <input type="button" value="Fullscreen" onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked, 
+</head>
+<body>
+<hr/>
+<figure style="overflow:visible;" id="spinner">
+    <div class="spinner"></div>
+    <center style="margin-top:0.5em"><strong>emscripten</strong></center>
+</figure>
+<div class="emscripten" id="status">Downloading...</div>
+<div class="emscripten">
+    <progress value="0" max="100" id="progress" hidden=1></progress>
+</div>
+<div class="emscripten_border">
+    <canvas class="emscripten" id="canvas"
+            oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+</div>
+<hr/>
+<div class="emscripten">
+    <input type="checkbox" id="resize">Resize canvas
+    <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
+    &nbsp;&nbsp;&nbsp;
+    <input type="button" value="Fullscreen" onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked,
                                                                                 document.getElementById('resize').checked)">
-      &nbsp;&nbsp;&nbsp;
-      Load File: <input type="file" id="file_loader" onchange="load_file(this)">
-    </div>
-    
-    <hr/>
-    <textarea class="emscripten" id="output" rows="8" readonly></textarea>
-    <input type="text" class="emscripten" id="console-input">
-    <hr>
-    <script type='text/javascript'>
-      var statusElement = document.getElementById('status');
-      var progressElement = document.getElementById('progress');
-      var spinnerElement = document.getElementById('spinner');
+    &nbsp;&nbsp;&nbsp;
+    Load File: <input type="file" id="file_loader" onchange="load_file(this)">
+</div>
 
-      var Module = {
+<hr/>
+<textarea class="emscripten" id="output" rows="8" readonly></textarea>
+<input type="text" class="emscripten" id="console-input">
+<hr>
+<script type='text/javascript'>
+    var statusElement = document.getElementById('status');
+    var progressElement = document.getElementById('progress');
+    var spinnerElement = document.getElementById('spinner');
+
+    var Module = {
         // attachGLFWEventsToCanvas: true,
         // doNotCaptureKeyboard: true,
         preRun: [],
         postRun: [],
-        print: (function() {
-          var element = document.getElementById('output');
-          if (element) element.value = ''; // clear browser cache
-          return function(text) {
-            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-            // These replacements are necessary if you render to raw HTML
-            //text = text.replace(/&/g, "&amp;");
-            //text = text.replace(/</g, "&lt;");
-            //text = text.replace(/>/g, "&gt;");
-            //text = text.replace('\n', '<br>', 'g');
-            console.log(text);
-            if (element) {
-              element.value += text + "\n";
-              element.scrollTop = element.scrollHeight; // focus on bottom
+        print: (function () {
+            var element = document.getElementById('output');
+            if (element) element.value = ''; // clear browser cache
+            return function (text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                // These replacements are necessary if you render to raw HTML
+                //text = text.replace(/&/g, "&amp;");
+                //text = text.replace(/</g, "&lt;");
+                //text = text.replace(/>/g, "&gt;");
+                //text = text.replace('\n', '<br>', 'g');
+                console.log(text);
+                if (element) {
+                    element.value += text + "\n";
+                    element.scrollTop = element.scrollHeight; // focus on bottom
+                }
+            };
+        })(),
+        canvas: (function () {
+            var canvas = document.getElementById('canvas');
+
+            // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+            // application robust, you may want to override this behavior before shipping!
+            // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+            canvas.addEventListener("webglcontextlost", function (e) {
+                alert('WebGL context lost. You will need to reload the page.');
+                e.preventDefault();
+            }, false);
+
+            return canvas;
+        })(),
+        setStatus: function (text) {
+            if (!Module.setStatus.last) Module.setStatus.last = {
+                time: Date.now(),
+                text: ''
+            };
+            if (text === Module.setStatus.last.text) return;
+            var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+            var now = Date.now();
+            if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+            Module.setStatus.last.time = now;
+            Module.setStatus.last.text = text;
+            if (m) {
+                text = m[1];
+                progressElement.value = parseInt(m[2]) * 100;
+                progressElement.max = parseInt(m[4]) * 100;
+                progressElement.hidden = false;
+                spinnerElement.hidden = false;
+            } else {
+                progressElement.value = null;
+                progressElement.max = null;
+                Module.canvas.focus();
+                progressElement.hidden = true;
+                if (!text) spinnerElement.hidden = true;
             }
-          };
-        })(),
-        canvas: (function() {
-          var canvas = document.getElementById('canvas');
-
-          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
-          // application robust, you may want to override this behavior before shipping!
-          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-          canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-
-          return canvas;
-        })(),
-        setStatus: function(text) {
-          if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-          if (text === Module.setStatus.last.text) return;
-          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-          var now = Date.now();
-          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
-          Module.setStatus.last.time = now;
-          Module.setStatus.last.text = text;
-          if (m) {
-            text = m[1];
-            progressElement.value = parseInt(m[2])*100;
-            progressElement.max = parseInt(m[4])*100;
-            progressElement.hidden = false;
-            spinnerElement.hidden = false;
-          } else {
-            progressElement.value = null;
-            progressElement.max = null;
-            Module.canvas.focus();
-            progressElement.hidden = true;
-            if (!text) spinnerElement.hidden = true;
-          }
-          statusElement.innerHTML = text;
+            statusElement.innerHTML = text;
         },
         totalDependencies: 0,
-        monitorRunDependencies: function(left) {
-          this.totalDependencies = Math.max(this.totalDependencies, left);
-          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        monitorRunDependencies: function (left) {
+            this.totalDependencies = Math.max(this.totalDependencies, left);
+            Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
         }
-      };
-      Module.setStatus('Downloading...');
-      window.onerror = function() {
+    };
+    Module.setStatus('Downloading...');
+    window.onerror = function () {
         Module.setStatus('Exception thrown, see JavaScript console');
         spinnerElement.style.display = 'none';
-        Module.setStatus = function(text) {
-          if (text) console.error('[post-exception status] ' + text);
+        Module.setStatus = function (text) {
+            if (text) console.error('[post-exception status] ' + text);
         };
-      };
+    };
 
+    // console_inp.addEventListener("focusout", (e) => {Module.canvas.focus()})
+    document.getElementsByClassName("emscripten_border")[0].addEventListener("click", (e) => {
+        Module.canvas.focus()
+    })
 
-      let reader = new FileReader();
-      reader.addEventListener('loadend', print_file);
+</script>
+<script type='text/javascript'>
+    var console_input_flag = 0;
+    var console_inp = document.getElementById("console-input")
+    document.addEventListener("keypress", (e) => {
+        if (document.activeElement === console_inp) {
+            if (e.key === "Enter") {
+                console_input_flag = 1;
+                // Module.ccall("input", "void", ["string"], [v]);
+            }
+        }
+    });
 
-      function load_file(f_inp){
+    function check_console_input() {
+        return console_input_flag;
+    }
+
+    function get_console_input() {
+        let v = console_inp.value;
+        console_input_flag = 0;
+        console_inp.value = "";
+        return v;
+    }
+</script>
+<script type="text/javascript">
+    let reader = new FileReader();
+    reader.addEventListener('loadend', print_file);
+
+    function load_file(f_inp) {
         console.log(f_inp.files);
         let file = f_inp.files[0];
         f_inp.value = "";
         reader.readAsArrayBuffer(file);
-      }
-      function print_file(e){
+    }
 
-        let result=reader.result;
+    function print_file(e) {
+        console.log(e);
+        console.log(reader);
+        let result = reader.result;
         const uint8_view = new Uint8Array(result);
         FS.writeFile('write_test.txt', uint8_view)
         console.log("calling...");
         Module.ccall('on_input_file', 'number', ['string'], ['write_test.txt'])
-      }
+    }
 
-      var console_inp = document.getElementById("console-input")
-      document.addEventListener("keypress", (e) => {
-        console.log(e);
-        if (document.activeElement === console_inp) {
-          if (e.key === "Enter") {
-            let v = console_inp.value;
-            console_inp.value = "";
-            Module.ccall("input", "void", ["string"], [v]);
-          }
-        }
-      });
-
-      // console_inp.addEventListener("focusout", (e) => {Module.canvas.focus()})
-      document.getElementsByClassName("emscripten_border")[0].addEventListener("click", (e) => {Module.canvas.focus()})
-
-      function download_generated(filename) {
-        let data = FS.readFile(filename, {encoding: 'utf8'} );
+    function download_generated(filename) {
+        let data = FS.readFile(filename, {encoding: 'utf8'});
         download_text_as_file(filename, data);
-      }
+    }
 
-      function download_text_as_file(filename, data) {
-          let anchor = document.createElement('a')
-          anchor.setAttribute('download', filename)
-          anchor.setAttribute('href', "data:text/plain;charset=utf-8," + encodeURIComponent(data))
-          anchor.style.display = "none";
-          document.body.appendChild(anchor);
-          anchor.click();
-          document.body.removeChild(anchor);
-      }
-
-    </script>
-    {{{ SCRIPT }}}
-  </body>
+    function download_text_as_file(filename, data) {
+        let anchor = document.createElement('a')
+        anchor.setAttribute('download', filename)
+        anchor.setAttribute('href', "data:text/plain;charset=utf-8," + encodeURIComponent(data))
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+    }
+</script>
+{{{ SCRIPT }}}
+</body>
 </html>

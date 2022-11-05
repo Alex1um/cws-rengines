@@ -83,4 +83,6 @@ extern void change_type(void **scene, unsigned long obj_id, int new_type);
 
 extern void output_file(const char *file_name);
 
+extern void add_console_input_provider(void **loop);
+
 #endif //CWS_RENGINES__ENGINE_H_

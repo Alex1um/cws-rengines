@@ -61,8 +61,7 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
         provider.borrow_mut().provide_events(&mut buf);
       }
       buf.extend(inlp.drain(..));
-      // self.window.borrow_mut().provide_events(&mut buf);
-      for e in buf.drain(0..buf.len()) {
+      for e in buf.drain(..) {
         if let Some(listeners) = self.event_listeners.get_mut(&e) {
           for listener in listeners {
             listener(&e, &mut inlp);

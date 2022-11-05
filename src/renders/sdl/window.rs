@@ -59,48 +59,21 @@ impl Window {
   }
 }
 
-impl EventProvider for WindowRef {
-  fn provide_events(&mut self, buf: &mut Vec<Event>) {
-    for e in self.borrow_mut().event_pump.poll_iter().take(10) {
-      match e {
-        SDLEvent::KeyDown { keycode, .. } => {
-          let keycode = keycode.unwrap();
-          buf.push(Event::KeyBoard { key: keycode as i32 });
-
-          #[cfg(feature = "provide_dbg")]
-          println!("key: {}; code: {}", keycode.name(), keycode as i32);
-        }
-        _ => {}
-      }
-    }
-  }
-}
-
 impl EventProvider for Window {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
-    for e in self.event_pump.poll_iter().take(10) {
-      match e {
-        SDLEvent::KeyDown { keycode, .. } => {
-          let keycode = keycode.unwrap();
-          buf.push(Event::KeyBoard { key: keycode as i32 });
+    buf.extend(self.event_pump
+      .poll_iter()
+      .filter_map(|e|
+        match e {
+          SDLEvent::KeyDown { keycode, .. } => {
+            let keycode = keycode.unwrap();
+            #[cfg(feature = "provide_dbg")]
+            println!("key: {}; code: {}", keycode.name(), keycode as i32);
 
-          #[cfg(feature = "provide_dbg")]
-          println!("key: {}; code: {}", keycode.name(), keycode as i32);
+            Some(Event::KeyBoard { key: keycode as i32 })
+          }
+          _ => None,
         }
-        _ => {}
-      }
-      // println!("new event! {:?}", event);
-    }
-    // buf.append(&mut self.event_pump
-    //   .keyboard_state()
-    //   .pressed_scancodes()
-    //   .filter_map(Keycode::from_scancode)
-    //   .map(|e| {
-    //
-    //
-    //     Event::KeyBoard { key: e as i32 }
-    //   }
-    //   )
-    //   .collect());
+      ));
   }
 }

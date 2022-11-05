@@ -188,7 +188,7 @@ impl Event {
           r#type: CEventType::FileInput,
           event: CEventContainer {
             file_input: ManuallyDrop::new(CEventFileInput {
-              file_name: CStr::from_bytes_with_nul(file_name.as_bytes()).expect("correct str to bytes conversion").as_ptr()
+              file_name: CString::new(file_name.to_string()).expect("correct rust to c string conversion").into_raw()
             })
           }
         }
@@ -198,7 +198,7 @@ impl Event {
           r#type: CEventType::Command,
           event: CEventContainer {
             command: ManuallyDrop::new(CEventCommand {
-              command: CStr::from_bytes_with_nul(command.as_bytes()).expect("correct str to bytes conversion").as_ptr()
+              command: CString::new(command.to_string()).expect("correct rust to c string conversion").into_raw()
             })
           }
         }
