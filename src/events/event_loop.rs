@@ -15,7 +15,7 @@ extern "C" {
 }
 
 impl EventProvider for Vec<Event> {
-  fn provide_events(&mut self, buf: &mut Vec<Event>) {
+  fn provide_events(& mut self, buf: & mut Vec<Event>) {
     buf.extend(self.drain(..));
   }
 }

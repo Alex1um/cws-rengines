@@ -15,12 +15,19 @@ pub enum Event {
     data: Box<dyn Any>,
   },
   ServerSync {
-    data: Box<dyn Any>,
+    data: Vec<u8>,
   },
   Message {
-    data: Box<dyn Any>,
+    data: Vec<u8>,
+  },
+  FileInput {
+    file_name: String,
+  },
+  Command {
+    command: String,
   },
   Loop,
+  Exit,
 }
 
 impl Event {
@@ -30,8 +37,11 @@ impl Event {
       Event::Mouse { key, pos } => Event::Mouse { key: *key, pos: *pos },
       Event::Loop => Event::Loop,
       Event::Custom { r#type, .. } => Event::Custom { r#type: *r#type, data: Box::new(()) },
-      Event::ServerSync { .. } => Event::ServerSync { data: Box::new(()) },
-      Event::Message { .. } => Event::Message { data: Box::new(()) }
+      Event::ServerSync { .. } => Event::ServerSync { data: vec![] },
+      Event::Message { .. } => Event::Message { data: vec![] },
+      Event::FileInput { .. } => Event::FileInput { file_name: String::default() },
+      Event::Command { .. } => Event::Command { command: String::default() },
+      Event::Exit => Event::Exit,
     }
   }
 }
@@ -39,9 +49,8 @@ impl Event {
 impl Hash for Event {
   fn hash<H: Hasher>(&self, state: &mut H) {
     match self {
-      Event::Custom { r#type: d, data: _ } => {
-        3.hash(state);
-        d.hash(state);
+      Event::Loop => {
+        0.hash(state);
       }
       Event::KeyBoard { key } => {
         // k.hash(state);
@@ -52,14 +61,24 @@ impl Hash for Event {
         // k.hash(state);
         2.hash(state);
       }
+      Event::Custom { r#type: d, data: _ } => {
+        3.hash(state);
+        d.hash(state);
+      }
       Event::ServerSync { data: _ } => {
         4.hash(state);
       }
       Event::Message { data: _ } => {
         5.hash(state);
       }
-      Event::Loop => {
-        0.hash(state);
+      Event::FileInput { .. } => {
+        6.hash(state);
+      }
+      Event::Command { .. } => {
+        7.hash(state);
+      }
+      Event::Exit => {
+        8.hash(state);
       }
     }
   }

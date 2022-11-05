@@ -9,9 +9,12 @@ enum EventType {
   Keyboard,
   Mouse,
   Custom,
-  Sync,
-  Msg,
+  ServerSync,
+  Message,
+  FileInput,
+  Command,
   Loop,
+  Exit,
 };
 
 union EventContainer {
@@ -28,14 +31,17 @@ union EventContainer {
     void *data;
   } custom;
   struct {
-    void *data;
+    char *data;
   } server_sync;
   struct {
-    void *data;
+    char *data;
   } server_msg;
   struct {
-    unsigned long ticks;
-  } loop;
+    char *file_name;
+  } file_input;
+  struct {
+    char *cmd;
+  } command;
 };
 
 struct Event {

@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::ffi::{c_char, c_void, CStr, CString};
 use std::mem::ManuallyDrop;
 use crate::events::event::Event;
 use crate::geometry::position::Position;
@@ -18,22 +19,27 @@ struct CEventMouse {
 #[repr(C)]
 struct CEventCustom {
   r#type: i32,
-  data: *const dyn Any,
+  data: *const c_void,
 }
 
 #[repr(C)]
 struct CEventServerSync {
-  data: *const dyn Any,
+  data: *const c_char,
 }
 
 #[repr(C)]
 struct CEventMessage {
-  data: *const dyn Any,
+  data: *const c_char,
 }
 
 #[repr(C)]
-struct CEventLoop {
-  ticks: u64,
+struct CEventFileInput {
+  file_name: *const c_char,
+}
+
+#[repr(C)]
+struct CEventCommand {
+  command: *const c_char,
 }
 
 #[repr(C)]
@@ -43,7 +49,8 @@ pub union CEventContainer {
   custom: ManuallyDrop<CEventCustom>,
   server_sync: ManuallyDrop<CEventServerSync>,
   server_msg: ManuallyDrop<CEventMessage>,
-  r#loop: ManuallyDrop<CEventLoop>,
+  file_input: ManuallyDrop<CEventFileInput>,
+  command: ManuallyDrop<CEventCommand>,
 }
 
 #[repr(i32)]
@@ -53,7 +60,10 @@ pub enum CEventType {
   Custom,
   Sync,
   Msg,
+  FileInput,
+  Command,
   Loop,
+  Exit,
 }
 
 #[repr(C)]
@@ -66,35 +76,48 @@ pub struct CEvent {
 impl Event {
   pub(crate) fn from_c(ce: CEvent) -> Event {
     unsafe {
-      match ce.r#type {
-        CEventType::Keyboard => {
+      match ce {
+        CEvent { r#type: CEventType::Keyboard, event: cec } => {
           Event::KeyBoard {
-            key: ce.event.keyboard.key,
+            key: cec.keyboard.key,
           }
         }
-        CEventType::Mouse => {
+        CEvent { r#type: CEventType::Mouse, event: cec } => {
           Event::Mouse {
-            pos: Position::new(ce.event.mouse.x as usize, ce.event.mouse.y as usize, 0),
-            key: ce.event.mouse.key,
+            pos: Position::new(cec.mouse.x as usize, cec.mouse.y as usize, 0),
+            key: cec.mouse.key,
           }
-        },
-        CEventType::Custom => {
+        }
+        CEvent { r#type: CEventType::Custom, event: cec } => {
           Event::Custom {
-            data: Box::new(ce.event.custom.data),
-            r#type: ce.event.custom.r#type,
+            data: Box::new(cec.custom.data),
+            r#type: cec.custom.r#type,
           }
-        },
-        CEventType::Sync => {
+        }
+        CEvent { r#type: CEventType::Sync, event: cec } => {
           Event::ServerSync {
-            data: Box::new(ce.event.server_sync.data),
+            data: CStr::from_ptr(cec.server_sync.data).to_bytes().to_vec(),
           }
-        },
-        CEventType::Msg => {
+        }
+        CEvent { r#type: CEventType::Msg, event: cec } => {
           Event::Message {
-            data: Box::new(ce.event.server_msg.data),
+            data: CStr::from_ptr(cec.server_sync.data).to_bytes().to_vec(),
           }
-        },
-        CEventType::Loop => { Event::Loop },
+        }
+        CEvent { r#type: CEventType::Loop, .. } => { Event::Loop }
+        CEvent { r#type: CEventType::FileInput, event: cec } => {
+          Event::FileInput {
+            file_name: CStr::from_ptr(cec.file_input.file_name).to_str().expect("correct str convertation").to_string(),
+          }
+        }
+        CEvent { r#type: CEventType::Command, event: cec } => {
+          Event::Command {
+            command: CStr::from_ptr(cec.command.command).to_str().expect("correct str convertation").to_string()
+          }
+        }
+        CEvent { r#type: CEventType::Exit, .. } => {
+          Event::Exit
+        }
       }
     }
   }
@@ -107,7 +130,7 @@ impl Event {
           event: CEventContainer {
             custom: ManuallyDrop::new(CEventCustom {
               r#type: *r#type,
-              data: data as *const Box<dyn Any>,
+              data: data as *const Box<dyn Any> as *const c_void,
             })
           },
         }
@@ -139,7 +162,7 @@ impl Event {
           r#type: CEventType::Sync,
           event: CEventContainer {
             server_sync: ManuallyDrop::new(CEventServerSync {
-              data: data as *const Box<dyn Any>,
+              data: CStr::from_bytes_with_nul(data).expect("correct bytes").as_ptr(),
             })
           },
         }
@@ -149,7 +172,7 @@ impl Event {
           r#type: CEventType::Msg,
           event: CEventContainer {
             server_msg: ManuallyDrop::new(CEventMessage {
-              data: data as *const Box<dyn Any>,
+              data: CStr::from_bytes_with_nul(data).expect("correct bytes").as_ptr(),
             })
           },
         }
@@ -157,11 +180,33 @@ impl Event {
       Event::Loop => {
         CEvent {
           r#type: CEventType::Loop,
+          event: unsafe { std::mem::zeroed() },
+        }
+      }
+      Event::FileInput { file_name } => {
+        CEvent {
+          r#type: CEventType::FileInput,
           event: CEventContainer {
-            r#loop: ManuallyDrop::new(CEventLoop {
-              ticks: 0
-            }),
-          },
+            file_input: ManuallyDrop::new(CEventFileInput {
+              file_name: CStr::from_bytes_with_nul(file_name.as_bytes()).expect("correct str to bytes conversion").as_ptr()
+            })
+          }
+        }
+      }
+      Event::Command { command } => {
+        CEvent {
+          r#type: CEventType::Command,
+          event: CEventContainer {
+            command: ManuallyDrop::new(CEventCommand {
+              command: CStr::from_bytes_with_nul(command.as_bytes()).expect("correct str to bytes conversion").as_ptr()
+            })
+          }
+        }
+      }
+      Event::Exit => {
+        CEvent {
+          r#type: CEventType::Exit,
+          event: unsafe { std::mem::zeroed() }
         }
       }
     }
