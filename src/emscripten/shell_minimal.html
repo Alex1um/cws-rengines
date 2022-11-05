@@ -227,12 +227,13 @@
 <script type="text/javascript">
     let reader = new FileReader();
     reader.addEventListener('loadend', print_file);
-
+    var file_input_status = 0;
     function load_file(f_inp) {
         console.log(f_inp.files);
         let file = f_inp.files[0];
         f_inp.value = "";
         reader.readAsArrayBuffer(file);
+        Module.canvas.focus();
     }
 
     function print_file(e) {
@@ -241,8 +242,17 @@
         let result = reader.result;
         const uint8_view = new Uint8Array(result);
         FS.writeFile('write_test.txt', uint8_view)
-        console.log("calling...");
-        Module.ccall('on_input_file', 'number', ['string'], ['write_test.txt'])
+        file_input_status = 1;
+        // Module.ccall('on_input_file', 'number', ['string'], ['write_test.txt'])
+    }
+
+    function get_file_input() {
+        file_input_status = 0;
+        return 'write_test.txt';
+    }
+
+    function check_file_input() {
+        return file_input_status;
     }
 
 

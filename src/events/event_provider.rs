@@ -37,8 +37,31 @@ pub fn console_input_command_provider(buf: &mut Vec<Event>) {
   }
 }
 
+
+#[cfg(target_os = "emscripten")]
+const FILE_INPUT_SCRIPT: &str = "get_file_input()\0";
+#[cfg(target_os = "emscripten")]
+const FILE_INPUT_CHECK: &str = "check_file_input()\0";
+
+#[cfg(target_os = "emscripten")]
+pub fn file_input_provider(buf: &mut Vec<Event>) {
+  unsafe {
+    if emscripten_run_script_int(FILE_INPUT_CHECK.as_ptr() as *const c_char) as i32 == 1 {
+      let str = CStr::from_ptr(emscripten_run_script_string(FILE_INPUT_SCRIPT.as_ptr() as *const c_char))
+        .to_str().expect("correct file input command conversion")
+        .to_string();
+      buf.push(Event::FileInput { file_name: str });
+    }
+  }
+}
+
 use std::io::BufReader;
 use std::rc::Rc;
+
+#[cfg(not(target_os = "emscripten"))]
+pub fn file_input_provider(buf: &mut Vec<Event>) {
+
+}
 
 #[cfg(not(target_os = "emscripten"))]
 pub fn console_input_command_provider(buf: &mut Vec<Event>) {

@@ -13,7 +13,7 @@ use std::rc::Rc;
 use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::{EventLoop, InLoopProviderRef};
-use crate::events::event_provider::{console_input_command_provider, EventProvider};
+use crate::events::event_provider::{console_input_command_provider, EventProvider, file_input_provider};
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -145,6 +145,11 @@ extern "C" fn output_file(_: *const c_char) {}
 #[no_mangle]
 extern "C" fn add_console_input_provider(eloop: &mut Box<EventLoop<SDLRender>>) {
   eloop.add_event_provider(Rc::new(RefCell::new(console_input_command_provider)));
+}
+
+#[no_mangle]
+extern "C" fn add_file_input_provider(eloop: &mut Box<EventLoop<SDLRender>>) {
+  eloop.add_event_provider(Rc::new(RefCell::new(file_input_provider)));
 }
 
 #[cfg(test)]

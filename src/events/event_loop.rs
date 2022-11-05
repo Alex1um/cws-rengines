@@ -15,10 +15,11 @@ extern "C" {
 }
 
 impl EventProvider for Vec<Event> {
-  fn provide_events(& mut self, buf: & mut Vec<Event>) {
+  fn provide_events(&mut self, buf: &mut Vec<Event>) {
     buf.extend(self.drain(..));
   }
 }
+
 pub type InLoopProviderRef<'a> = &'a mut Vec<Event>;
 
 type EventCallBack = Box<dyn FnMut(&Event, InLoopProviderRef)>;
@@ -66,6 +67,9 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
           for listener in listeners {
             listener(&e, &mut inlp);
           }
+        }
+        if e == Event::Exit {
+          break 'main_loop;
         }
       }
       if let Some(listeners) = self.event_listeners.get_mut(&Event::Loop) {

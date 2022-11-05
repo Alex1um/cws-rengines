@@ -92,4 +92,6 @@ extern void output_file(const char *file_name);
 
 extern void add_console_input_provider(EventLoop *loop);
 
+extern void add_file_input_provider(EventLoop *loop);
+
 #endif //CWS_RENGINES__ENGINE_H_
