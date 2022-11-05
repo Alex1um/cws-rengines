@@ -9,7 +9,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use crate::renders::sdl::scene::SceneRef;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_os = "emscripten")]
 extern "C" {
   fn emscripten_sleep(ms: u32);
 }
@@ -75,10 +75,10 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
       }
       self.render.render(&self.scene);
 
-      #[cfg(not(target_arch = "wasm32"))]
+      #[cfg(not(target_os = "emscripten"))]
       sleep(Duration::from_millis(200));
 
-      #[cfg(target_arch = "wasm32")]
+      #[cfg(target_os = "emscripten")]
       unsafe { emscripten_sleep(200); }
     }
   }

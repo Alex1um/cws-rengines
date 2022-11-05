@@ -49,40 +49,47 @@ struct Event {
   EventContainer event;
 };
 
-typedef void (*Callback)(Event, void **event_provider);
+typedef void * EventProvider;
 
-extern unsigned int create_object(void **scene, int x, int y, int z, int type);
+typedef void (*Callback)(Event, EventProvider *event_provider);
 
-extern void *const create_scene(unsigned long x,
+typedef void *const Scene;
+typedef unsigned int ObjectId;
+typedef void *const Window;
+typedef void *const EventLoop;
+
+extern ObjectId create_object(Scene *scene, int x, int y, int z, int type);
+
+extern Scene create_scene(unsigned long x,
                                 unsigned long y,
                                 unsigned long z);
 
-extern void *const create_window(int res_x, int res_y);
+extern Window create_window(int res_x, int res_y);
 
 extern void testing();
 
 extern void test_string(char *str);
 
-extern void load_texture(void **scene, void **window, char *path);
+extern void load_texture(Scene *scene, Window *window, char *path);
 
-extern void *create_event_loop(void **scene, void **window);
+extern void *create_event_loop(Scene *scene, Window *window);
 
-extern void throw_event(void **event_provider, Event event);
+extern void throw_event(EventProvider *event_provider, Event event);
 
-extern void start_event_loop(void *loop);
+extern void start_event_loop(EventLoop loop);
 
-extern void add_event_listener(void **loop, Event event, Callback callback);
+extern void add_event_listener(EventLoop *loop, Event event, Callback callback);
 
-extern void add_keyboard_listener(void **loop, int key, Callback callback);
+extern void add_keyboard_listener(EventLoop *loop, int key, Callback callback);
 
-extern void remove_object(void **scene, unsigned int obj_id);
+extern void remove_object(Scene *scene, ObjectId obj_id);
 
-extern void *clone_scene(void **scene);
+extern Scene clone_scene(Scene *scene);
 
-extern void change_type(void **scene, unsigned long obj_id, int new_type);
+extern void change_type(Scene *scene, ObjectId obj_id, int new_type);
 
 extern void output_file(const char *file_name);
 
-extern void add_console_input_provider(void **loop);
+extern void add_console_input_provider(EventLoop *loop);
 
 #endif //CWS_RENGINES__ENGINE_H_

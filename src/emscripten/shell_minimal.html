@@ -245,6 +245,7 @@
         Module.ccall('on_input_file', 'number', ['string'], ['write_test.txt'])
     }
 
+
     function download_generated(filename) {
         let data = FS.readFile(filename, {encoding: 'utf8'});
         download_text_as_file(filename, data);
