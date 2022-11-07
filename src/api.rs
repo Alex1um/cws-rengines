@@ -152,6 +152,16 @@ extern "C" fn add_file_input_provider(eloop: &mut Box<EventLoop<SDLRender>>) {
   eloop.add_event_provider(Rc::new(RefCell::new(file_input_provider)));
 }
 
+#[no_mangle]
+extern "C" fn scene_resize(scene: &SceneRef, x: i32, y: i32, z: i32) {
+  scene.borrow_mut().resize(x as usize, y as usize, z as usize);
+}
+
+#[no_mangle]
+extern "C" fn scene_smart_resize(scene: &SceneRef, x: i32, y: i32, z: i32) {
+  scene.borrow_mut().resize_with_objects(x as usize, y as usize, z as usize);
+}
+
 #[cfg(test)]
 mod objects_tests {
   use super::*;

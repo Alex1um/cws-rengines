@@ -1,4 +1,5 @@
 use std::cell::{RefCell};
+use std::cmp::min;
 use std::error::Error;
 use std::rc::Rc;
 use crate::geometry::position::Position;
@@ -125,6 +126,24 @@ impl Area {
 
   pub fn create_ref(self) -> AreaRef {
     Rc::new(RefCell::new(self))
+  }
+
+  pub fn resize(&mut self,
+  sx: usize,
+  sy: usize,
+  sz: usize) {
+    let mut new_area = vec![vec![vec![Option::<GameObjectID>::None; sx]; sy]; sz];
+    for z in 0..min(sx, self.sz) {
+      for y in 0..min(sy, self.sy) {
+        for x in 0..min(sz, self.sz) {
+          new_area[z][y][x] = self.area[z][y][x].take();
+        }
+      }
+    }
+    self.area = new_area;
+    self.sx = sx;
+    self.sy = sy;
+    self.sz = sz;
   }
 
 }

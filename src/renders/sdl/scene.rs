@@ -104,5 +104,21 @@ impl<'a> Scene<'a> {
     self.area.get_size_x()
   }
 
+  pub fn resize(&mut self, x: usize, y: usize, z: usize) {
+    self.area.resize(x, y, z);
+  }
+
+  pub fn resize_with_objects(&mut self, x: usize, y: usize, z: usize) {
+    self.area.resize(x, y, z);
+    let mut to_remove = Vec::<GameObjectID>::new();
+    for (id, obj) in &self.objects {
+      if obj.get_pos().x > x || obj.get_pos().y > y || obj.get_pos().z > z {
+        to_remove.push(*id);
+      }
+    }
+    for id in to_remove {
+      self.objects.remove(&id);
+    }
+  }
 }
 

@@ -94,4 +94,8 @@ extern void add_console_input_provider(EventLoop *loop);
 
 extern void add_file_input_provider(EventLoop *loop);
 
+extern void scene_resize(Scene *scene, int x, int y, int z);
+
+extern void scene_smart_resize(Scene *scene, int x, int y, int z);
+
 #endif //CWS_RENGINES__ENGINE_H_
