@@ -14,6 +14,7 @@ use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::{EventLoop, InLoopProviderRef};
 use crate::events::event_provider::{console_input_command_provider, EventProvider, file_input_provider};
+use crate::geometry::size::ViewSize;
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -73,12 +74,11 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef) -> Bo
     Screen::new(
       View::new(
         Position::new(0, 0, 0),
-        scene.borrow().get_size_x(),
-        scene.borrow().get_size_y(),
+        ViewSize::Percent(1., 1.),
         scene.borrow().get_size_z(),
+        ViewSize::Pixels(0, 0),
+        ViewSize::Percent(1., 1.),
       ),
-      win.borrow().get_width() / scene.borrow().get_size_x(),
-      win.borrow().get_height() / scene.borrow().get_size_y(),
     ),
     Rc::clone(&win),
   );

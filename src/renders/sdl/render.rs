@@ -31,20 +31,25 @@ impl SDLRender {
 impl Render for SDLRender {
   fn render(&mut self, scene: &SceneRef) {
     self.window.borrow_mut().canvas.clear();
+    let ww = self.window.borrow().get_width();
+    let wh = self.window.borrow().get_height();
     let scene = scene.borrow();
     for v in &self.screen.view_stack {
       let Position { x: xs, y: ys, z: zs } = v.get_pos();
-      let width = v.get_width();
-      let height = v.get_height();
+      let (width, height) = v.get_size((scene.get_size_x(), scene.get_size_y()));
       let layers = v.get_layers();
+      let screen_pos = v.get_screen_pos((ww, wh));
+      let screen_size = v.get_screen_size((ww, wh));
+      let ratio_x = screen_size.0 / width;
+      let ratio_y = screen_size.1 / height;
       for z in zs..layers {
         for y in ys..height {
           for x in xs..width {
             if let Some(cur_obj) = scene.get(x, y, z) {
-              let obj = Rect::new((x * self.screen.ratio_x) as i32,
-                                  (y * self.screen.ratio_y) as i32,
-                                  (self.screen.ratio_x) as u32,
-                                  (self.screen.ratio_y) as u32,
+              let obj = Rect::new((x * ratio_x + screen_pos.0) as i32,
+                                  (y * ratio_y + screen_pos.1) as i32,
+                                  (ratio_x) as u32,
+                                  (ratio_y) as u32,
               );
 
               let texture = scene.textures.get(cur_obj.get_type() as usize).expect("texture of object type");
