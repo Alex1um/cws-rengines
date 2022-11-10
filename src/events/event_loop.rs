@@ -41,6 +41,10 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
     }
   }
 
+  pub fn get_render(&mut self) -> &mut T {
+    return &mut self.render;
+  }
+
   pub fn add_event_listener(&mut self, event: Event, f: EventCallBack) -> Result<(), Box<dyn Error>> {
     if let Some(v) = self.event_listeners.get_mut(&event) {
       v.push(f);

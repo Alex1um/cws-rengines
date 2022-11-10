@@ -1,9 +1,10 @@
+use std::rc::Rc;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
 use sdl2::video::WindowContext;
 use crate::geometry::position::Position;
 use crate::renders::base::render::Render;
-use crate::renders::base::screen::Screen;
+use crate::renders::base::screen::ScreenRef;
 use crate::renders::sdl::scene::SceneRef;
 use crate::renders::sdl::window::WindowRef;
 // use std::rc::Rc;
@@ -12,12 +13,12 @@ use crate::renders::sdl::window::WindowRef;
 pub type Creator = TextureCreator<WindowContext>;
 
 pub struct SDLRender {
-  screen: Screen,
+  screen: ScreenRef,
   window: WindowRef,
 }
 
 impl SDLRender {
-  pub fn new(screen: Screen, window: WindowRef) -> SDLRender
+  pub fn new(screen: ScreenRef, window: WindowRef) -> SDLRender
   {
     let render = SDLRender {
       screen,
@@ -25,7 +26,6 @@ impl SDLRender {
     };
     return render;
   }
-
 }
 
 impl Render for SDLRender {
@@ -34,12 +34,11 @@ impl Render for SDLRender {
     let ww = self.window.borrow().get_width();
     let wh = self.window.borrow().get_height();
     let scene = scene.borrow();
-    for v in &self.screen.view_stack {
-      let Position { x: xs, y: ys, z: zs } = v.get_pos();
-      let (width, height) = v.get_size((scene.get_size_x(), scene.get_size_y()));
+    for v in &self.screen.borrow().view_stack {
+      let zs = 0;
+      let ((xs, ys), (width, height)) = v.get_area_rect(&(scene.get_size_x(), scene.get_size_y()));
       let layers = v.get_layers();
-      let screen_pos = v.get_screen_pos((ww, wh));
-      let screen_size = v.get_screen_size((ww, wh));
+      let (screen_pos, screen_size) = v.get_screen_rect(&(ww, wh));
       let ratio_x = screen_size.0 / width;
       let ratio_y = screen_size.1 / height;
       for z in zs..layers {

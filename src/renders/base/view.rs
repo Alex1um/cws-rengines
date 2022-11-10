@@ -1,33 +1,38 @@
 use crate::geometry::position::Position;
-use crate::geometry::size::ViewSize;
+use crate::geometry::rect::Rect;
+use crate::geometry::relative_component::RelativeComponent;
+use crate::geometry::size::RelativeSize2D;
 
 pub struct View {
-  pos: Position,
-  size: ViewSize,
+  area_rect: Rect,
   layers: usize,
-  screen_pos: ViewSize,
-  screen_size: ViewSize,
+  screen_rect: Rect,
 }
 
 impl View {
-  pub fn new(pos: Position,
-             size: ViewSize,
+  pub fn new(area_rect: Rect,
              layers: usize,
-             screen_pos: ViewSize,
-             screen_size: ViewSize) -> Self {
+             screen_rect: Rect) -> Self {
     View {
-      pos,
-      size,
+      area_rect,
       layers,
-      screen_pos,
-      screen_size,
+      screen_rect,
     }
   }
 
-  pub fn get_size(&self, scene_size: (usize, usize)) -> (usize, usize) { self.size.get_in_px(scene_size) }
   pub fn get_layers(&self) -> usize { self.layers }
 
-  pub fn get_pos(&self) -> Position { self.pos }
-  pub fn get_screen_pos(&self, resolution: (usize, usize)) -> (usize, usize) { self.screen_pos.get_in_px(resolution) }
-  pub fn get_screen_size(&self, resolution: (usize, usize)) -> (usize, usize) { self.screen_size.get_in_px(resolution) }
+  pub fn get_area_rect(&self, scene_size: &(usize, usize)) -> ((usize, usize), (usize, usize)) { self.area_rect.get_absolute(scene_size) }
+  pub fn get_screen_rect(&self, resolution: &(usize, usize)) -> ((usize, usize), (usize, usize)) { self.screen_rect.get_absolute(resolution) }
+
+  pub fn set_screen_size(&mut self, new: RelativeSize2D) {
+    self.screen_rect.size = new;
+  }
+  pub fn set_screen_pos(&mut self, new: RelativeSize2D) {
+    self.screen_rect.pos = new;
+  }
+
+  pub fn set_size(&mut self, new: RelativeSize2D) {
+    self.screen_rect.size = new;
+  }
 }

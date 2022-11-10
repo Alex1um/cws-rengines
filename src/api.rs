@@ -1,11 +1,11 @@
 use crate::geometry::position::{CoordsType, Position};
 use crate::objects::area::{Area};
 use crate::objects::game_object::{GameObject, GameObjectID};
-use crate::renders::base::screen::Screen;
+use crate::renders::base::screen::{Screen, ScreenRef};
 use crate::renders::base::view::View;
 use std::boxed::Box;
 use std::cell::RefCell;
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{c_char, c_float, c_int, CStr, CString};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::{Read};
@@ -14,7 +14,8 @@ use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::{EventLoop, InLoopProviderRef};
 use crate::events::event_provider::{console_input_command_provider, EventProvider, file_input_provider};
-use crate::geometry::size::ViewSize;
+use crate::geometry::rect::Rect;
+use crate::geometry::size::{RelativeSize, RelativeSize2D};
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -68,19 +69,20 @@ extern "C" fn clone_scene<'a>(scene: &SceneRef<'a>) -> SceneRef<'a> {
 }
 
 #[no_mangle]
-extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef) -> Box<EventLoop<'a, SDLRender>> {
+extern "C" fn create_screen() -> ScreenRef {
+  return Screen::new(
+    View::new(
+      Rect::new((0., 0.).into(), (1., 1.).into()),
+      2,
+      Rect::new((0., 0.).into(), (1., 1.).into()),
+    )).create_ref();
+}
+
+#[no_mangle]
+extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef, screen: &ScreenRef) -> Box<EventLoop<'a, SDLRender>> {
   println!("creating...");
-  let render = SDLRender::new(
-    Screen::new(
-      View::new(
-        Position::new(0, 0, 0),
-        ViewSize::Percent(1., 1.),
-        scene.borrow().get_size_z(),
-        ViewSize::Pixels(0, 0),
-        ViewSize::Percent(1., 1.),
-      ),
-    ),
-    Rc::clone(&win),
+  let render = SDLRender::new(Rc::clone(screen),
+                              Rc::clone(&win),
   );
   let mut l = Box::new(EventLoop::new(Rc::clone(scene), render));
   let link = Rc::clone(win);
@@ -88,7 +90,6 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef) -> Bo
   return l;
   // println!("starting...");
   // l.start();
-
 }
 
 #[no_mangle]
@@ -108,7 +109,7 @@ extern "C" fn add_keyboard_listener(eloop: &mut Box<EventLoop<SDLRender>>, key: 
     callback(ce, provider)
   };
   let boxed = Box::new(clos);
-  eloop.add_event_listener(Event::KeyBoard {key}, boxed).expect("added callback");
+  eloop.add_event_listener(Event::KeyBoard { key }, boxed).expect("added callback");
 }
 
 #[no_mangle]
@@ -123,12 +124,14 @@ extern "C" fn start_event_loop(mut eloop: Box<EventLoop<SDLRender>>) {
 }
 
 #[no_mangle]
-extern "C" fn change_type(scene: &SceneRef, id: GameObjectID, new_type: i32) {
-  scene.borrow_mut().get_by_id(id).expect("correct id").set_type(new_type);
+extern "C" fn change_type(scene: &SceneRef, id: GameObjectID, new_type: c_int) {
+  scene.borrow_mut().get_by_id(id).expect("correct id").set_type(new_type as i32);
 }
 
 #[cfg(target_os = "emscripten")]
-extern "C" { fn emscripten_run_script(script: *const c_char); }
+extern "C" {
+  fn emscripten_run_script(script: *const c_char);
+}
 
 #[cfg(target_os = "emscripten")]
 #[no_mangle]
@@ -153,13 +156,21 @@ extern "C" fn add_file_input_provider(eloop: &mut Box<EventLoop<SDLRender>>) {
 }
 
 #[no_mangle]
-extern "C" fn scene_resize(scene: &SceneRef, x: i32, y: i32, z: i32) {
+extern "C" fn scene_resize(scene: &SceneRef, x: c_int, y: c_int, z: c_int) {
   scene.borrow_mut().resize(x as usize, y as usize, z as usize);
 }
 
 #[no_mangle]
-extern "C" fn scene_smart_resize(scene: &SceneRef, x: i32, y: i32, z: i32) {
+extern "C" fn scene_smart_resize(scene: &SceneRef, x: c_int, y: c_int, z: c_int) {
   scene.borrow_mut().resize_with_objects(x as usize, y as usize, z as usize);
+}
+
+#[no_mangle]
+extern "C" fn change_view(screen: &ScreenRef, scale: c_float) {
+  let mut screen = screen.borrow_mut();
+  let view = screen.get_layer(0).expect("view exist");
+  // view.set_pos();
+  view.set_size(RelativeSize::Percent(scale as f32).into());
 }
 
 #[cfg(test)]

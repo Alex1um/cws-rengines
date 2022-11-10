@@ -1,9 +1,16 @@
 use std::cell::RefCell;
 use std::error::Error;
+use std::io::stdin;
 use std::rc::Rc;
 use sdl2::render::{TextureCreator, WindowCanvas};
 use sdl2::{EventPump, Sdl};
 use sdl2::event::Event as SDLEvent;
+
+#[cfg(target_family = "unix")]
+use sdl2::libc::{fcntl, O_NONBLOCK, F_SETFD, F_SETFL};
+#[cfg(target_family = "unix")]
+use std::os::unix::io::AsRawFd;
+
 use sdl2::video::WindowContext;
 use crate::events::event::Event;
 use crate::events::event_provider::EventProvider;
@@ -21,8 +28,12 @@ pub type WindowRef = Rc<RefCell<Window>>;
 
 impl Window {
   pub fn new(width: usize, height: usize) -> Result<Window, Box<dyn Error>> {
+
     sdl2::hint::set("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas");
-    // println!("kb element setted: {}", sdl2::hint::set("SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas"));
+
+    #[cfg(target_family = "unix")]
+    unsafe { fcntl(stdin().as_raw_fd(), F_SETFL, O_NONBLOCK); };
+
     let context = sdl2::init()?;
     let pump = context.event_pump()?;
     let video = context.video()?;

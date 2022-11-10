@@ -50,7 +50,7 @@ struct Event {
 };
 
 typedef void * EventProvider;
-
+typedef void *const Screen;
 typedef void (*Callback)(Event, EventProvider *event_provider);
 
 typedef void *const Scene;
@@ -72,7 +72,9 @@ extern void test_string(char *str);
 
 extern void load_texture(Scene *scene, Window *window, char *path);
 
-extern void *create_event_loop(Scene *scene, Window *window);
+extern Screen create_screen();
+
+extern EventLoop create_event_loop(Scene *scene, Window *window, Screen *screen);
 
 extern void throw_event(EventProvider *event_provider, Event event);
 
@@ -97,5 +99,7 @@ extern void add_file_input_provider(EventLoop *loop);
 extern void scene_resize(Scene *scene, int x, int y, int z);
 
 extern void scene_smart_resize(Scene *scene, int x, int y, int z);
+
+extern void change_view(Screen *screen, float scale);
 
 #endif //CWS_RENGINES__ENGINE_H_

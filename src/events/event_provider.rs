@@ -65,8 +65,10 @@ pub fn file_input_provider(buf: &mut Vec<Event>) {
 
 #[cfg(not(target_os = "emscripten"))]
 pub fn console_input_command_provider(buf: &mut Vec<Event>) {
-  // let mut reader = BufReader::new(stdin());
-  // let mut str = String::new();
-  // reader.read_line(&mut str).expect("successful reading");
-  // buf.push(Event::Command {command: str});
+
+  let mut reader = BufReader::new(stdin());
+  let mut str = String::new();
+  if reader.read_line(&mut str).is_ok() {
+    buf.push(Event::Command { command: str.to_string() });
+  }
 }

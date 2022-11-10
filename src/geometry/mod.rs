@@ -1,6 +1,7 @@
 pub mod position;
 pub mod rect;
 pub mod size;
+pub(crate) mod relative_component;
 
 #[cfg(test)]
 mod tests {
