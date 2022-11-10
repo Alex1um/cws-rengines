@@ -1,8 +1,6 @@
-use std::rc::Rc;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
 use sdl2::video::WindowContext;
-use crate::geometry::position::Position;
 use crate::renders::base::render::Render;
 use crate::renders::base::screen::ScreenRef;
 use crate::renders::sdl::scene::SceneRef;

@@ -84,7 +84,7 @@ impl Event {
         }
         CEvent { r#type: CEventType::Mouse, event: cec } => {
           Event::Mouse {
-            pos: Position::new(cec.mouse.x as usize, cec.mouse.y as usize, 0),
+            pos: (cec.mouse.x, cec.mouse.y),
             key: cec.mouse.key,
           }
         }
@@ -151,8 +151,8 @@ impl Event {
           event: CEventContainer {
             mouse: ManuallyDrop::new(CEventMouse {
               key: *key,
-              x: pos.x as i32,
-              y: pos.y as i32,
+              x: pos.0,
+              y: pos.1,
             })
           },
         }

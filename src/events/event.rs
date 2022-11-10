@@ -8,7 +8,7 @@ pub enum Event {
   },
   Mouse {
     key: i32,
-    pos: Position,
+    pos: (i32, i32),
   },
   Custom {
     r#type: i32,
@@ -57,8 +57,8 @@ impl Hash for Event {
         key.hash(state);
         1.hash(state);
       }
-      Event::Mouse { key: _, pos: _ } => {
-        // k.hash(state);
+      Event::Mouse { key, pos: _ } => {
+        key.hash(state);
         2.hash(state);
       }
       Event::Custom { r#type: d, data: _ } => {

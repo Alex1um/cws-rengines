@@ -7,13 +7,15 @@ use sdl2::{EventPump, Sdl};
 use sdl2::event::Event as SDLEvent;
 
 #[cfg(target_family = "unix")]
-use sdl2::libc::{fcntl, O_NONBLOCK, F_SETFD, F_SETFL};
+use sdl2::libc::{fcntl, O_NONBLOCK, F_SETFL};
 #[cfg(target_family = "unix")]
 use std::os::unix::io::AsRawFd;
+use sdl2::mouse::MouseWheelDirection;
 
 use sdl2::video::WindowContext;
 use crate::events::event::Event;
 use crate::events::event_provider::EventProvider;
+use crate::geometry::position::Position;
 
 pub struct Window {
   ctx: Sdl,
@@ -83,7 +85,26 @@ impl EventProvider for Window {
 
             Some(Event::KeyBoard { key: keycode as i32 })
           }
-          _ => None,
+          SDLEvent::MouseWheel { x, y, .. } => {
+
+            #[cfg(feature = "provide_dbg")]
+            println!("mouse wheel: {:?}", e);
+
+            Some(Event::Mouse{ key: 3, pos: (x, y) })
+          }
+          SDLEvent::MouseMotion { x, y, .. } => {
+
+            #[cfg(feature = "provide_dbg")]
+            println!("mouse, move: {:?}", e);
+
+            Some(Event::Mouse{ key: 0, pos: (x, y) })
+          }
+          _ => {
+            #[cfg(feature = "provide_dbg")]
+            println!("event: {:?}", e);
+
+            None
+          },
         }
       ));
   }

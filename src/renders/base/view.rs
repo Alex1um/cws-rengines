@@ -1,4 +1,3 @@
-use crate::geometry::position::Position;
 use crate::geometry::rect::Rect;
 use crate::geometry::relative_component::RelativeComponent;
 use crate::geometry::size::RelativeSize2D;
