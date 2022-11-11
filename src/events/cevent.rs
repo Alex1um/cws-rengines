@@ -10,8 +10,16 @@ struct CEventKeyboard {
 }
 
 #[repr(C)]
-struct CEventMouse {
+struct CEventMouseClick {
   key: i32,
+  x: i32,
+  y: i32,
+}
+
+#[repr(C)]
+struct CEventMouseWheel {
+  x_dir: i32,
+  y_dir: i32,
   x: i32,
   y: i32,
 }
@@ -45,7 +53,8 @@ struct CEventCommand {
 #[repr(C)]
 pub union CEventContainer {
   keyboard: ManuallyDrop<CEventKeyboard>,
-  mouse: ManuallyDrop<CEventMouse>,
+  mouse_click: ManuallyDrop<CEventMouseClick>,
+  mouse_wheel: ManuallyDrop<CEventMouseWheel>,
   custom: ManuallyDrop<CEventCustom>,
   server_sync: ManuallyDrop<CEventServerSync>,
   server_msg: ManuallyDrop<CEventMessage>,
@@ -56,7 +65,8 @@ pub union CEventContainer {
 #[repr(i32)]
 pub enum CEventType {
   Keyboard,
-  Mouse,
+  MouseClick,
+  MouseWheel,
   Custom,
   Sync,
   Msg,
@@ -82,10 +92,19 @@ impl Event {
             key: cec.keyboard.key,
           }
         }
-        CEvent { r#type: CEventType::Mouse, event: cec } => {
-          Event::Mouse {
-            pos: (cec.mouse.x, cec.mouse.y),
-            key: cec.mouse.key,
+        CEvent { r#type: CEventType::MouseClick, event: cec } => {
+          Event::MouseClick {
+            x: cec.mouse_click.x,
+            y: cec.mouse_click.y,
+            key: cec.mouse_click.key,
+          }
+        }
+        CEvent { r#type: CEventType::MouseWheel, event: cec} => {
+          Event::MouseWheel {
+            x_dir: cec.mouse_wheel.x_dir,
+            y_dir: cec.mouse_wheel.y_dir,
+            y: cec.mouse_wheel.y,
+            x: cec.mouse_wheel.x,
           }
         }
         CEvent { r#type: CEventType::Custom, event: cec } => {
@@ -145,16 +164,29 @@ impl Event {
           },
         }
       }
-      Event::Mouse { key, pos } => {
+      Event::MouseClick { key, x, y } => {
         CEvent {
-          r#type: CEventType::Mouse,
+          r#type: CEventType::MouseClick,
           event: CEventContainer {
-            mouse: ManuallyDrop::new(CEventMouse {
+            mouse_click: ManuallyDrop::new(CEventMouseClick {
               key: *key,
-              x: pos.0,
-              y: pos.1,
+              x: *x,
+              y: *y,
             })
           },
+        }
+      }
+      Event::MouseWheel { x, y, x_dir, y_dir } => {
+        CEvent {
+          r#type: CEventType::MouseWheel,
+          event: CEventContainer {
+            mouse_wheel: ManuallyDrop::new(CEventMouseWheel {
+              x: *x,
+              y: *y,
+              x_dir: *x_dir,
+              y_dir: *y_dir,
+            })
+          }
         }
       }
       Event::ServerSync { data } => {

@@ -10,7 +10,7 @@ use sdl2::event::Event as SDLEvent;
 use sdl2::libc::{fcntl, O_NONBLOCK, F_SETFL};
 #[cfg(target_family = "unix")]
 use std::os::unix::io::AsRawFd;
-use sdl2::mouse::MouseWheelDirection;
+use sdl2::mouse::{MouseButton, MouseWheelDirection};
 
 use sdl2::video::WindowContext;
 use crate::events::event::Event;
@@ -30,7 +30,6 @@ pub type WindowRef = Rc<RefCell<Window>>;
 
 impl Window {
   pub fn new(width: usize, height: usize) -> Result<Window, Box<dyn Error>> {
-
     sdl2::hint::set("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas");
 
     #[cfg(target_family = "unix")]
@@ -74,6 +73,7 @@ impl Window {
 
 impl EventProvider for Window {
   fn provide_events(&mut self, buf: &mut Vec<Event>) {
+    let mouse_state = self.event_pump.mouse_state();
     buf.extend(self.event_pump
       .poll_iter()
       .filter_map(|e|
@@ -85,26 +85,35 @@ impl EventProvider for Window {
 
             Some(Event::KeyBoard { key: keycode as i32 })
           }
-          SDLEvent::MouseWheel { x, y, .. } => {
+          SDLEvent::MouseButtonDown { x, y, mouse_btn, .. } => {
+            let btn =
+              match mouse_btn {
+                MouseButton::Unknown => 6,
+                MouseButton::Left => 1,
+                MouseButton::Middle => 3,
+                MouseButton::Right => 2,
+                MouseButton::X1 => 4,
+                MouseButton::X2 => 5,
+              };
+            Some(Event::MouseClick { x, y, key: btn })
+          }
+          SDLEvent::MouseWheel { x: x_dir, y: y_dir, .. } => {
+
+            // sdl2::mouse::MouseState
+            let x = mouse_state.x();
+            let y = mouse_state.y();
 
             #[cfg(feature = "provide_dbg")]
             println!("mouse wheel: {:?}", e);
 
-            Some(Event::Mouse{ key: 3, pos: (x, y) })
-          }
-          SDLEvent::MouseMotion { x, y, .. } => {
-
-            #[cfg(feature = "provide_dbg")]
-            println!("mouse, move: {:?}", e);
-
-            Some(Event::Mouse{ key: 0, pos: (x, y) })
+            Some(Event::MouseWheel { x_dir, y_dir, x, y })
           }
           _ => {
             #[cfg(feature = "provide_dbg")]
             println!("event: {:?}", e);
 
             None
-          },
+          }
         }
       ));
   }

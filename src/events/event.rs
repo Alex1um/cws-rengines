@@ -6,9 +6,16 @@ pub enum Event {
   KeyBoard {
     key: i32,
   },
-  Mouse {
+  MouseClick {
     key: i32,
-    pos: (i32, i32),
+    x: i32,
+    y: i32,
+  },
+  MouseWheel {
+    x_dir: i32,
+    y_dir: i32,
+    x: i32,
+    y: i32,
   },
   Custom {
     r#type: i32,
@@ -34,7 +41,8 @@ impl Event {
   pub(crate) fn get_hasher(&self) -> Event {
     match self {
       Event::KeyBoard { key } => Event::KeyBoard { key: *key },
-      Event::Mouse { key, pos } => Event::Mouse { key: *key, pos: *pos },
+      Event::MouseClick { key, .. } => Event::MouseClick { key: *key, x: i32::default(), y: i32::default() },
+      Event::MouseWheel { .. } => Event::MouseWheel { x: i32::default(), y: i32::default(), x_dir: i32::default(), y_dir: i32::default() },
       Event::Loop => Event::Loop,
       Event::Custom { r#type, .. } => Event::Custom { r#type: *r#type, data: Box::new(()) },
       Event::ServerSync { .. } => Event::ServerSync { data: vec![] },
@@ -49,36 +57,21 @@ impl Event {
 impl Hash for Event {
   fn hash<H: Hasher>(&self, state: &mut H) {
     match self {
-      Event::Loop => {
-        0.hash(state);
+      _ => {
+        std::mem::discriminant(self).hash(state);
       }
       Event::KeyBoard { key } => {
         // k.hash(state);
+        std::mem::discriminant(self).hash(state);
         key.hash(state);
-        1.hash(state);
       }
-      Event::Mouse { key, pos: _ } => {
+      Event::MouseClick { key, .. } => {
+        std::mem::discriminant(self).hash(state);
         key.hash(state);
-        2.hash(state);
       }
-      Event::Custom { r#type: d, data: _ } => {
-        3.hash(state);
+      Event::Custom { r#type: d, .. } => {
+        std::mem::discriminant(self).hash(state);
         d.hash(state);
-      }
-      Event::ServerSync { data: _ } => {
-        4.hash(state);
-      }
-      Event::Message { data: _ } => {
-        5.hash(state);
-      }
-      Event::FileInput { .. } => {
-        6.hash(state);
-      }
-      Event::Command { .. } => {
-        7.hash(state);
-      }
-      Event::Exit => {
-        8.hash(state);
       }
     }
   }

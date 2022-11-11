@@ -7,7 +7,8 @@
 
 enum EventType {
   Keyboard,
-  Mouse,
+  MouseClick,
+  MouseWheel,
   Custom,
   ServerSync,
   Message,
@@ -25,7 +26,13 @@ union EventContainer {
     int key;
     int x;
     int y;
-  } mouse;
+  } mouse_click;
+  struct {
+    int x_dir;
+    int y_dir;
+    int x;
+    int y;
+  } mouse_wheel;
   struct {
     int type;
     void *data;
