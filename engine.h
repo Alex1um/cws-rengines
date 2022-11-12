@@ -6,8 +6,10 @@
 #define CWS_RENGINES__ENGINE_H_
 
 enum EventType {
-  Keyboard,
-  MouseClick,
+  KeyboardButtonDown,
+  KeyboardButtonUp,
+  MouseButtonDown,
+  MouseButtonUp,
   MouseWheel,
   Custom,
   ServerSync,
@@ -21,12 +23,12 @@ enum EventType {
 union EventContainer {
   struct {
     int key;
-  } keyboard;
+  } keyboard_button;
   struct {
     int key;
     int x;
     int y;
-  } mouse_click;
+  } mouse_button;
   struct {
     int x_dir;
     int y_dir;

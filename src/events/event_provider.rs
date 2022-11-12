@@ -1,6 +1,4 @@
-use std::cell::RefCell;
-use std::ffi::{c_char, c_int, CStr, CString};
-use std::io::{BufRead, Read, stdin};
+use std::io::{stdin};
 use crate::events::event::Event;
 
 pub trait EventProvider {
@@ -55,20 +53,16 @@ pub fn file_input_provider(buf: &mut Vec<Event>) {
   }
 }
 
-use std::io::BufReader;
-use std::rc::Rc;
-
 #[cfg(not(target_os = "emscripten"))]
-pub fn file_input_provider(buf: &mut Vec<Event>) {
+pub fn file_input_provider(_: &mut Vec<Event>) {
 
 }
 
 #[cfg(not(target_os = "emscripten"))]
 pub fn console_input_command_provider(buf: &mut Vec<Event>) {
 
-  let mut reader = BufReader::new(stdin());
   let mut str = String::new();
-  if reader.read_line(&mut str).is_ok() {
+  if stdin().read_line(&mut str).is_ok() {
     buf.push(Event::Command { command: str.to_string() });
   }
 }

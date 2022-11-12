@@ -5,17 +5,14 @@ use crate::renders::base::screen::{Screen, ScreenRef};
 use crate::renders::base::view::View;
 use std::boxed::Box;
 use std::cell::RefCell;
-use std::ffi::{c_char, c_float, c_int, CStr, CString};
-use std::fs::File;
-use std::io::BufReader;
-use std::io::prelude::{Read};
+use std::ffi::{c_char, c_float, c_int, CStr};
 use std::rc::Rc;
 use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::{EventLoop, InLoopProviderRef};
-use crate::events::event_provider::{console_input_command_provider, EventProvider, file_input_provider};
+use crate::events::event_provider::{console_input_command_provider, file_input_provider};
 use crate::geometry::rect::Rect;
-use crate::geometry::size::{RelativeSize, RelativeSize2D};
+use crate::geometry::size::{RelativeSize};
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -109,7 +106,7 @@ extern "C" fn add_keyboard_listener(eloop: &mut Box<EventLoop<SDLRender>>, key: 
     callback(ce, provider)
   };
   let boxed = Box::new(clos);
-  eloop.add_event_listener(Event::KeyBoard { key }, boxed).expect("added callback");
+  eloop.add_event_listener(Event::KeyBoardButtonDown { key }, boxed).expect("added callback");
 }
 
 #[no_mangle]

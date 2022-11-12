@@ -49,7 +49,7 @@ impl Render for SDLRender {
                                   (ratio_y) as u32,
               );
 
-              let texture = scene.textures.get(cur_obj.get_type() as usize).expect("texture of object type");
+              let texture = scene.get_texture(cur_obj.get_type() as usize).expect("texture of object type");
               texture.query();
               self.window.borrow_mut().canvas.copy(texture, None, obj).expect("successful texture write");
             }

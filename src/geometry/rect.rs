@@ -1,13 +1,6 @@
 use crate::geometry::relative_component::RelativeComponent;
 use crate::geometry::size::{RelativeSize, RelativeSize2D};
 
-pub struct AbsoluteRect {
-  x: usize,
-  y: usize,
-  width: usize,
-  height: usize,
-}
-
 pub struct Rect {
   pub pos: RelativeSize2D,
   pub size: RelativeSize2D,

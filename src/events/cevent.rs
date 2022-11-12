@@ -2,15 +2,14 @@ use std::any::Any;
 use std::ffi::{c_char, c_void, CStr, CString};
 use std::mem::ManuallyDrop;
 use crate::events::event::Event;
-use crate::geometry::position::Position;
 
 #[repr(C)]
-struct CEventKeyboard {
+struct CEventKeyboardButton {
   key: i32,
 }
 
 #[repr(C)]
-struct CEventMouseClick {
+struct CEventMouseButton {
   key: i32,
   x: i32,
   y: i32,
@@ -31,11 +30,6 @@ struct CEventCustom {
 }
 
 #[repr(C)]
-struct CEventServerSync {
-  data: *const c_char,
-}
-
-#[repr(C)]
 struct CEventMessage {
   data: *const c_char,
 }
@@ -46,26 +40,23 @@ struct CEventFileInput {
 }
 
 #[repr(C)]
-struct CEventCommand {
-  command: *const c_char,
-}
-
-#[repr(C)]
 pub union CEventContainer {
-  keyboard: ManuallyDrop<CEventKeyboard>,
-  mouse_click: ManuallyDrop<CEventMouseClick>,
+  keyboard_button: ManuallyDrop<CEventKeyboardButton>,
+  mouse_button: ManuallyDrop<CEventMouseButton>,
   mouse_wheel: ManuallyDrop<CEventMouseWheel>,
   custom: ManuallyDrop<CEventCustom>,
-  server_sync: ManuallyDrop<CEventServerSync>,
+  server_sync: ManuallyDrop<CEventMessage>,
   server_msg: ManuallyDrop<CEventMessage>,
   file_input: ManuallyDrop<CEventFileInput>,
-  command: ManuallyDrop<CEventCommand>,
+  command: ManuallyDrop<CEventMessage>,
 }
 
 #[repr(i32)]
 pub enum CEventType {
-  Keyboard,
-  MouseClick,
+  KeyboardButtonDown,
+  KeyboardButtonUp,
+  MouseButtonDown,
+  MouseButtonUp,
   MouseWheel,
   Custom,
   Sync,
@@ -87,16 +78,28 @@ impl Event {
   pub(crate) fn from_c(ce: CEvent) -> Event {
     unsafe {
       match ce {
-        CEvent { r#type: CEventType::Keyboard, event: cec } => {
-          Event::KeyBoard {
-            key: cec.keyboard.key,
+        CEvent { r#type: CEventType::KeyboardButtonDown, event: cec } => {
+          Event::KeyBoardButtonDown {
+            key: cec.keyboard_button.key,
           }
         }
-        CEvent { r#type: CEventType::MouseClick, event: cec } => {
-          Event::MouseClick {
-            x: cec.mouse_click.x,
-            y: cec.mouse_click.y,
-            key: cec.mouse_click.key,
+        CEvent { r#type: CEventType::KeyboardButtonUp, event: cec } => {
+          Event::KeyBoardButtonUp {
+            key: cec.keyboard_button.key,
+          }
+        }
+        CEvent { r#type: CEventType::MouseButtonDown, event: cec } => {
+          Event::MouseButtonDown {
+            x: cec.mouse_button.x,
+            y: cec.mouse_button.y,
+            key: cec.mouse_button.key,
+          }
+        }
+        CEvent { r#type: CEventType::MouseButtonUp, event: cec } => {
+          Event::MouseButtonUp {
+            x: cec.mouse_button.x,
+            y: cec.mouse_button.y,
+            key: cec.mouse_button.key,
           }
         }
         CEvent { r#type: CEventType::MouseWheel, event: cec} => {
@@ -131,7 +134,7 @@ impl Event {
         }
         CEvent { r#type: CEventType::Command, event: cec } => {
           Event::Command {
-            command: CStr::from_ptr(cec.command.command).to_str().expect("correct str convertation").to_string()
+            command: CStr::from_ptr(cec.command.data).to_str().expect("correct str convertation").to_string()
           }
         }
         CEvent { r#type: CEventType::Exit, .. } => {
@@ -154,21 +157,43 @@ impl Event {
           },
         }
       }
-      Event::KeyBoard { key } => {
+      Event::KeyBoardButtonDown { key } => {
         CEvent {
-          r#type: CEventType::Keyboard,
+          r#type: CEventType::KeyboardButtonDown,
           event: CEventContainer {
-            keyboard: ManuallyDrop::new(CEventKeyboard {
+            keyboard_button: ManuallyDrop::new(CEventKeyboardButton {
               key: *key
             })
           },
         }
       }
-      Event::MouseClick { key, x, y } => {
+      Event::KeyBoardButtonUp { key } => {
         CEvent {
-          r#type: CEventType::MouseClick,
+          r#type: CEventType::KeyboardButtonUp,
           event: CEventContainer {
-            mouse_click: ManuallyDrop::new(CEventMouseClick {
+            keyboard_button: ManuallyDrop::new(CEventKeyboardButton {
+              key: *key
+            })
+          },
+        }
+      }
+      Event::MouseButtonDown { key, x, y } => {
+        CEvent {
+          r#type: CEventType::MouseButtonDown,
+          event: CEventContainer {
+            mouse_button: ManuallyDrop::new(CEventMouseButton {
+              key: *key,
+              x: *x,
+              y: *y,
+            })
+          },
+        }
+      }
+      Event::MouseButtonUp { key, x, y } => {
+        CEvent {
+          r#type: CEventType::MouseButtonUp,
+          event: CEventContainer {
+            mouse_button: ManuallyDrop::new(CEventMouseButton {
               key: *key,
               x: *x,
               y: *y,
@@ -193,7 +218,7 @@ impl Event {
         CEvent {
           r#type: CEventType::Sync,
           event: CEventContainer {
-            server_sync: ManuallyDrop::new(CEventServerSync {
+            server_sync: ManuallyDrop::new(CEventMessage {
               data: CStr::from_bytes_with_nul(data).expect("correct bytes").as_ptr(),
             })
           },
@@ -229,8 +254,8 @@ impl Event {
         CEvent {
           r#type: CEventType::Command,
           event: CEventContainer {
-            command: ManuallyDrop::new(CEventCommand {
-              command: CString::new(command.to_string()).expect("correct rust to c string conversion").into_raw()
+            command: ManuallyDrop::new(CEventMessage {
+              data: CString::new(command.to_string()).expect("correct rust to c string conversion").into_raw()
             })
           }
         }

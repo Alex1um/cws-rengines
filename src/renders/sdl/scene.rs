@@ -37,7 +37,7 @@ impl<'a> Scene<'a> {
     return Ok(id);
   }
 
-  fn get_texture(&self, obj_type: i32) -> Option<&Texture<'a>> {
+  pub(crate) fn get_texture(&self, obj_type: usize) -> Option<&Texture<'a>> {
     // TODO: Solve it
     return self.textures.get(obj_type as usize);
   }

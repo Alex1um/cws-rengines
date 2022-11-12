@@ -10,12 +10,11 @@ use sdl2::event::Event as SDLEvent;
 use sdl2::libc::{fcntl, O_NONBLOCK, F_SETFL};
 #[cfg(target_family = "unix")]
 use std::os::unix::io::AsRawFd;
-use sdl2::mouse::{MouseButton, MouseWheelDirection};
+use sdl2::mouse::{MouseButton};
 
 use sdl2::video::WindowContext;
 use crate::events::event::Event;
 use crate::events::event_provider::EventProvider;
-use crate::geometry::position::Position;
 
 pub struct Window {
   ctx: Sdl,
@@ -80,10 +79,19 @@ impl EventProvider for Window {
         match e {
           SDLEvent::KeyDown { keycode, .. } => {
             let keycode = keycode.unwrap();
-            #[cfg(feature = "provide_dbg")]
-            println!("key: {}; code: {}", keycode.name(), keycode as i32);
 
-            Some(Event::KeyBoard { key: keycode as i32 })
+            #[cfg(feature = "provide_dbg")]
+            println!("keydown: {}; code: {}", keycode.name(), keycode as i32);
+
+            Some(Event::KeyBoardButtonDown { key: keycode as i32 })
+          }
+          SDLEvent::KeyUp { keycode, .. } => {
+            let keycode = keycode.unwrap();
+
+            #[cfg(feature = "provide_dbg")]
+            println!("keyup: {}; code: {}", keycode.name(), keycode as i32);
+
+            Some(Event::KeyBoardButtonUp { key: keycode as i32 })
           }
           SDLEvent::MouseButtonDown { x, y, mouse_btn, .. } => {
             let btn =
@@ -93,9 +101,29 @@ impl EventProvider for Window {
                 MouseButton::Middle => 3,
                 MouseButton::Right => 2,
                 MouseButton::X1 => 4,
+               MouseButton::X2 => 5,
+              };
+
+            #[cfg(feature = "provide_dbg")]
+            println!("mouse key down: {}, {} - button: {}", x, y, btn);
+
+            Some(Event::MouseButtonDown { x, y, key: btn })
+          }
+          SDLEvent::MouseButtonUp { x, y, mouse_btn, .. } => {
+            let btn =
+              match mouse_btn {
+                MouseButton::Unknown => 6,
+                MouseButton::Left => 1,
+                MouseButton::Middle => 3,
+                MouseButton::Right => 2,
+                MouseButton::X1 => 4,
                 MouseButton::X2 => 5,
               };
-            Some(Event::MouseClick { x, y, key: btn })
+
+            #[cfg(feature = "provide_dbg")]
+            println!("mouse key up: {}, {} - button: {}", x, y, btn);
+
+            Some(Event::MouseButtonUp { x, y, key: btn })
           }
           SDLEvent::MouseWheel { x: x_dir, y: y_dir, .. } => {
 
