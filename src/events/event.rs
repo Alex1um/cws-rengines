@@ -24,6 +24,12 @@ pub enum Event {
     x: i32,
     y: i32,
   },
+  MouseMotion {
+    x: i32,
+    y: i32,
+    x_rel: i32,
+    y_rel: i32,
+  },
   Custom {
     r#type: i32,
     data: Box<dyn Any>,

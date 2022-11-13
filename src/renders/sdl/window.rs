@@ -125,6 +125,13 @@ impl EventProvider for Window {
 
             Some(Event::MouseButtonUp { x, y, key: btn })
           }
+          SDLEvent::MouseMotion { x, y, xrel, yrel, ..} => {
+
+            #[cfg(feature = "provide_dbg")]
+            println!("mouse motion: from ({}, {}) to ({}, {}); delta: ({}, {})", x - xrel, y - xrel, x, y, xrel, yrel);
+
+            Some(Event::MouseMotion {x, y, x_rel: xrel, y_rel: yrel})
+          }
           SDLEvent::MouseWheel { x: x_dir, y: y_dir, .. } => {
 
             // sdl2::mouse::MouseState

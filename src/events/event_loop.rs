@@ -84,10 +84,10 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
       self.render.render(&self.scene);
 
       #[cfg(not(target_os = "emscripten"))]
-      sleep(Duration::from_millis(200));
+      sleep(Duration::from_millis(100));
 
       #[cfg(target_os = "emscripten")]
-      unsafe { emscripten_sleep(200); }
+      unsafe { emscripten_sleep(100); }
     }
   }
 }

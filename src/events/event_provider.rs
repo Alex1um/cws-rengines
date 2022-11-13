@@ -1,5 +1,6 @@
 use std::io::{stdin};
 use crate::events::event::Event;
+use std::ffi::{c_char, CStr, CString, c_int};
 
 pub trait EventProvider {
   fn provide_events(&mut self, buf: &mut Vec<Event>);

@@ -24,6 +24,14 @@ struct CEventMouseWheel {
 }
 
 #[repr(C)]
+struct CEventMouseMotion {
+  x: i32,
+  y: i32,
+  x_rel: i32,
+  y_rel: i32,
+}
+
+#[repr(C)]
 struct CEventCustom {
   r#type: i32,
   data: *const c_void,
@@ -44,6 +52,7 @@ pub union CEventContainer {
   keyboard_button: ManuallyDrop<CEventKeyboardButton>,
   mouse_button: ManuallyDrop<CEventMouseButton>,
   mouse_wheel: ManuallyDrop<CEventMouseWheel>,
+  mouse_motion: ManuallyDrop<CEventMouseMotion>,
   custom: ManuallyDrop<CEventCustom>,
   server_sync: ManuallyDrop<CEventMessage>,
   server_msg: ManuallyDrop<CEventMessage>,
@@ -58,6 +67,7 @@ pub enum CEventType {
   MouseButtonDown,
   MouseButtonUp,
   MouseWheel,
+  MouseMotion,
   Custom,
   Sync,
   Msg,
@@ -108,6 +118,14 @@ impl Event {
             y_dir: cec.mouse_wheel.y_dir,
             y: cec.mouse_wheel.y,
             x: cec.mouse_wheel.x,
+          }
+        }
+        CEvent { r#type: CEventType::MouseMotion, event: cec} => {
+          Event::MouseMotion {
+            x: cec.mouse_motion.x,
+            y: cec.mouse_motion.y,
+            y_rel: cec.mouse_motion.y_rel,
+            x_rel: cec.mouse_motion.x_rel,
           }
         }
         CEvent { r#type: CEventType::Custom, event: cec } => {
@@ -210,6 +228,19 @@ impl Event {
               y: *y,
               x_dir: *x_dir,
               y_dir: *y_dir,
+            })
+          }
+        }
+      }
+      Event::MouseMotion { x, y, x_rel, y_rel } => {
+        CEvent {
+          r#type: CEventType::MouseMotion,
+          event: CEventContainer {
+            mouse_motion: ManuallyDrop::new(CEventMouseMotion {
+              x: *x,
+              y: *y,
+              x_rel: *x_rel,
+              y_rel: *y_rel,
             })
           }
         }

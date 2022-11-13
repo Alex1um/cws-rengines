@@ -29,22 +29,22 @@ impl SDLRender {
 impl Render for SDLRender {
   fn render(&mut self, scene: &SceneRef) {
     self.window.borrow_mut().canvas.clear();
-    let ww = self.window.borrow().get_width();
-    let wh = self.window.borrow().get_height();
+    let ww = self.window.borrow().get_width() as i32;
+    let wh = self.window.borrow().get_height() as i32;
     let scene = scene.borrow();
     for v in &self.screen.borrow().view_stack {
       let zs = 0;
       let ((xs, ys), (width, height)) = v.get_area_rect(&(scene.get_size_x(), scene.get_size_y()));
       let layers = v.get_layers();
       let (screen_pos, screen_size) = v.get_screen_rect(&(ww, wh));
-      let ratio_x = screen_size.0 / width;
-      let ratio_y = screen_size.1 / height;
+      let ratio_x = screen_size.0 / width as i32;
+      let ratio_y = screen_size.1 / height as i32;
       for z in zs..layers {
         for y in ys..height {
           for x in xs..width {
             if let Some(cur_obj) = scene.get(x, y, z) {
-              let obj = Rect::new((x * ratio_x + screen_pos.0) as i32,
-                                  (y * ratio_y + screen_pos.1) as i32,
+              let obj = Rect::new(x as i32 * ratio_x + screen_pos.0,
+                                  y  as i32 * ratio_y + screen_pos.1,
                                   (ratio_x) as u32,
                                   (ratio_y) as u32,
               );

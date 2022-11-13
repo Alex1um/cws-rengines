@@ -11,6 +11,7 @@ enum EventType {
   MouseButtonDown,
   MouseButtonUp,
   MouseWheel,
+  MouseMotion,
   Custom,
   ServerSync,
   Message,
@@ -35,6 +36,12 @@ union EventContainer {
     int x;
     int y;
   } mouse_wheel;
+  struct {
+    int x;
+    int y;
+    int x_rel;
+    int y_rel;
+  } mouse_motion;
   struct {
     int type;
     void *data;
@@ -109,6 +116,8 @@ extern void scene_resize(Scene *scene, int x, int y, int z);
 
 extern void scene_smart_resize(Scene *scene, int x, int y, int z);
 
-extern void change_view(Screen *screen, float scale);
+extern void set_view_size(Screen *screen, float scale_y);
+
+extern void set_view_pos(Screen *screen, int dx, int dy);
 
 #endif //CWS_RENGINES__ENGINE_H_

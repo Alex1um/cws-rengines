@@ -5,14 +5,14 @@ use crate::renders::base::screen::{Screen, ScreenRef};
 use crate::renders::base::view::View;
 use std::boxed::Box;
 use std::cell::RefCell;
-use std::ffi::{c_char, c_float, c_int, CStr};
+use std::ffi::{c_char, c_float, c_int, CStr, CString};
 use std::rc::Rc;
 use crate::events::cevent::CEvent;
 use crate::events::event::Event;
 use crate::events::event_loop::{EventLoop, InLoopProviderRef};
 use crate::events::event_provider::{console_input_command_provider, file_input_provider};
 use crate::geometry::rect::Rect;
-use crate::geometry::size::{RelativeSize};
+use crate::geometry::size::{RelativeSize, RelativeSize2D};
 use crate::renders::sdl::render::SDLRender;
 use crate::renders::sdl::scene::{Scene, SceneRef};
 use crate::renders::sdl::window::{Window, WindowRef};
@@ -163,11 +163,19 @@ extern "C" fn scene_smart_resize(scene: &SceneRef, x: c_int, y: c_int, z: c_int)
 }
 
 #[no_mangle]
-extern "C" fn change_view(screen: &ScreenRef, scale: c_float) {
+extern "C" fn set_view_size(screen: &ScreenRef, scale: c_float) {
   let mut screen = screen.borrow_mut();
   let view = screen.get_layer(0).expect("view exist");
   // view.set_pos();
-  view.set_size(RelativeSize::Percent(scale as f32).into());
+  view.set_screen_size(RelativeSize::Percent(scale as f32).into());
+}
+
+#[no_mangle]
+extern "C" fn set_view_pos(screen: &ScreenRef, dx: c_int, dy: c_int) {
+  let mut screen = screen.borrow_mut();
+  let view = screen.get_layer(0).expect("view exist");
+  // view.set_pos();
+  view.set_screen_pos(RelativeSize2D::from((dx as isize, dy as isize)));
 }
 
 #[cfg(test)]

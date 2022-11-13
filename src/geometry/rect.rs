@@ -27,3 +27,9 @@ impl RelativeComponent<(usize, usize), ((usize, usize), (usize, usize))> for Rec
     return (self.pos.get_absolute(t), self.size.get_absolute(t));
   }
 }
+
+impl RelativeComponent<(i32, i32), ((i32, i32), (i32, i32))> for Rect {
+  fn get_absolute(&self, t: &(i32, i32)) -> ((i32, i32), (i32, i32)) {
+    return (self.pos.get_absolute(t), self.size.get_absolute(t));
+  }
+}

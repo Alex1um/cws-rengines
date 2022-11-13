@@ -25,6 +25,24 @@ impl RelativeComponent<usize, usize> for RelativeSize {
 
 }
 
+
+impl RelativeComponent<i32, i32> for RelativeSize {
+  fn get_absolute(&self, t: &i32) -> i32 {
+    return match self {
+      RelativeSize::Percent(p) => {
+        (*t as f32 * p) as i32
+      }
+      RelativeSize::Absolute(c) => {
+        (*c).try_into().expect("absolute is less than max i32")
+      }
+      RelativeSize::Shift(s) => {
+        (*t as isize + *s) as i32
+      }
+    }
+  }
+
+}
+
 impl From<f32> for RelativeSize {
   fn from(p: f32) -> Self {
     RelativeSize::Percent(p)
@@ -48,6 +66,13 @@ pub struct RelativeSize2D(RelativeSize, RelativeSize);
 impl RelativeComponent<(usize, usize), (usize, usize)> for RelativeSize2D {
 
   fn get_absolute(&self, t: &(usize, usize)) -> (usize, usize) {
+    return (self.0.get_absolute(&t.0), self.1.get_absolute(&t.1));
+  }
+}
+
+impl RelativeComponent<(i32, i32), (i32, i32)> for RelativeSize2D {
+
+  fn get_absolute(&self, t: &(i32, i32)) -> (i32, i32) {
     return (self.0.get_absolute(&t.0), self.1.get_absolute(&t.1));
   }
 }
