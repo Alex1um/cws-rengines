@@ -58,6 +58,9 @@ union EventContainer {
   struct {
     char *cmd;
   } command;
+  struct {
+    unsigned long long tick;
+  } loop;
 };
 
 struct Event {
@@ -90,7 +93,7 @@ extern void load_texture(Scene *scene, Window *window, char *path);
 
 extern Screen create_screen();
 
-extern EventLoop create_event_loop(Scene *scene, Window *window, Screen *screen);
+extern EventLoop create_event_loop(Scene *scene, Window *window, Screen *screen, int max_fps);
 
 extern void throw_event(EventProvider *event_provider, Event event);
 

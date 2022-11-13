@@ -5,9 +5,11 @@ use rustc_hash::FxHashMap;
 use crate::events::event::{Event};
 use crate::events::event_provider::EventProvider;
 use crate::renders::base::render::Render;
-use std::thread::sleep;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use crate::renders::sdl::scene::SceneRef;
+
+#[cfg(not(target_os = "emscripten"))]
+use std::thread::sleep;
 
 #[cfg(target_os = "emscripten")]
 extern "C" {
@@ -29,15 +31,17 @@ pub struct EventLoop<'a, T: Render + Sized> {
   render: T,
   event_listeners: FxHashMap<Event, Vec<EventCallBack>>,
   event_providers: Vec<Rc<RefCell<dyn EventProvider>>>,
+  millis_per_frame: u64,
 }
 
 impl<T> EventLoop<'_, T> where T: Render + Sized {
-  pub fn new(scene: SceneRef, render: T) -> EventLoop<T> {
+  pub fn new(scene: SceneRef, render: T, max_fps: u64) -> EventLoop<T> {
     EventLoop {
       scene,
       render,
       event_listeners: FxHashMap::<Event, Vec<EventCallBack>>::default(),
       event_providers: vec![],
+      millis_per_frame: 1000 / max_fps,
     }
   }
 
@@ -58,10 +62,16 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
     self.event_providers.push(provider);
   }
 
+  pub fn set_max_fps(&mut self, max_fps: u64) {
+    self.millis_per_frame = 1000 / max_fps;
+  }
+
   pub fn start(&mut self) {
     let mut buf: Vec<Event> = vec![];
     let mut inlp = Vec::<Event>::new();
+    let mut tick_event = Event::Loop {tick: 0};
     'main_loop: loop {
+      let clock = Instant::now();
       for provider in &self.event_providers {
         provider.borrow_mut().provide_events(&mut buf);
       }
@@ -76,18 +86,28 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
           break 'main_loop;
         }
       }
-      if let Some(listeners) = self.event_listeners.get_mut(&Event::Loop) {
+      if let Some(listeners) = self.event_listeners.get_mut(&tick_event) {
         for listener in listeners {
-          listener(&Event::Loop, &mut inlp);
+          listener(&tick_event, &mut inlp);
         }
       }
       self.render.render(&self.scene);
+      match tick_event {
+        Event::Loop {ref mut tick} => { *tick += 1; }
+        _ => {}
+      };
 
-      #[cfg(not(target_os = "emscripten"))]
-      sleep(Duration::from_millis(100));
+      let time = (clock.elapsed().as_millis()) as u64;
 
-      #[cfg(target_os = "emscripten")]
-      unsafe { emscripten_sleep(100); }
+      if self.millis_per_frame > time {
+        #[cfg(not(target_os = "emscripten"))]
+        sleep(Duration::from_millis(self.millis_per_frame - time));
+
+        #[cfg(target_os = "emscripten")]
+        unsafe { emscripten_sleep(self.millis_per_frame - time); }
+      }
+      // #[cfg(feature = "provide_dbg")]
+      // println!("time for frame(without sleep): {} millis; fps(with sleep): {}",time, 1. / clock.elapsed().as_secs_f64());
     }
   }
 }

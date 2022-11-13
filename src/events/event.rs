@@ -46,7 +46,9 @@ pub enum Event {
   Command {
     command: String,
   },
-  Loop,
+  Loop {
+    tick: u64,
+  },
   Exit,
 }
 

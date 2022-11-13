@@ -1,5 +1,5 @@
 use std::any::Any;
-use std::ffi::{c_char, c_void, CStr, CString};
+use std::ffi::{c_char, c_ulonglong, c_void, CStr, CString};
 use std::mem::ManuallyDrop;
 use crate::events::event::Event;
 
@@ -48,6 +48,11 @@ struct CEventFileInput {
 }
 
 #[repr(C)]
+struct CEventLoop {
+  tick: c_ulonglong,
+}
+
+#[repr(C)]
 pub union CEventContainer {
   keyboard_button: ManuallyDrop<CEventKeyboardButton>,
   mouse_button: ManuallyDrop<CEventMouseButton>,
@@ -58,6 +63,7 @@ pub union CEventContainer {
   server_msg: ManuallyDrop<CEventMessage>,
   file_input: ManuallyDrop<CEventFileInput>,
   command: ManuallyDrop<CEventMessage>,
+  r#loop: ManuallyDrop<CEventLoop>,
 }
 
 #[repr(i32)]
@@ -112,7 +118,7 @@ impl Event {
             key: cec.mouse_button.key,
           }
         }
-        CEvent { r#type: CEventType::MouseWheel, event: cec} => {
+        CEvent { r#type: CEventType::MouseWheel, event: cec } => {
           Event::MouseWheel {
             x_dir: cec.mouse_wheel.x_dir,
             y_dir: cec.mouse_wheel.y_dir,
@@ -120,7 +126,7 @@ impl Event {
             x: cec.mouse_wheel.x,
           }
         }
-        CEvent { r#type: CEventType::MouseMotion, event: cec} => {
+        CEvent { r#type: CEventType::MouseMotion, event: cec } => {
           Event::MouseMotion {
             x: cec.mouse_motion.x,
             y: cec.mouse_motion.y,
@@ -144,7 +150,11 @@ impl Event {
             data: CStr::from_ptr(cec.server_sync.data).to_bytes().to_vec(),
           }
         }
-        CEvent { r#type: CEventType::Loop, .. } => { Event::Loop }
+        CEvent { r#type: CEventType::Loop, event: cec } => {
+          Event::Loop {
+            tick: cec.r#loop.tick
+          }
+        }
         CEvent { r#type: CEventType::FileInput, event: cec } => {
           Event::FileInput {
             file_name: CStr::from_ptr(cec.file_input.file_name).to_str().expect("correct str convertation").to_string(),
@@ -229,7 +239,7 @@ impl Event {
               x_dir: *x_dir,
               y_dir: *y_dir,
             })
-          }
+          },
         }
       }
       Event::MouseMotion { x, y, x_rel, y_rel } => {
@@ -242,7 +252,7 @@ impl Event {
               x_rel: *x_rel,
               y_rel: *y_rel,
             })
-          }
+          },
         }
       }
       Event::ServerSync { data } => {
@@ -265,10 +275,14 @@ impl Event {
           },
         }
       }
-      Event::Loop => {
+      Event::Loop { tick } => {
         CEvent {
           r#type: CEventType::Loop,
-          event: unsafe { std::mem::zeroed() },
+          event: CEventContainer {
+            r#loop: ManuallyDrop::new(CEventLoop {
+              tick: *tick,
+            })
+          },
         }
       }
       Event::FileInput { file_name } => {
@@ -278,7 +292,7 @@ impl Event {
             file_input: ManuallyDrop::new(CEventFileInput {
               file_name: CString::new(file_name.to_string()).expect("correct rust to c string conversion").into_raw()
             })
-          }
+          },
         }
       }
       Event::Command { command } => {
@@ -288,13 +302,13 @@ impl Event {
             command: ManuallyDrop::new(CEventMessage {
               data: CString::new(command.to_string()).expect("correct rust to c string conversion").into_raw()
             })
-          }
+          },
         }
       }
       Event::Exit => {
         CEvent {
           r#type: CEventType::Exit,
-          event: unsafe { std::mem::zeroed() }
+          event: unsafe { std::mem::zeroed() },
         }
       }
     }

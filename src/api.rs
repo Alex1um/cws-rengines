@@ -76,12 +76,12 @@ extern "C" fn create_screen() -> ScreenRef {
 }
 
 #[no_mangle]
-extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef, screen: &ScreenRef) -> Box<EventLoop<'a, SDLRender>> {
+extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef, screen: &ScreenRef, fps_max: c_int) -> Box<EventLoop<'a, SDLRender>> {
   println!("creating...");
   let render = SDLRender::new(Rc::clone(screen),
                               Rc::clone(&win),
   );
-  let mut l = Box::new(EventLoop::new(Rc::clone(scene), render));
+  let mut l = Box::new(EventLoop::new(Rc::clone(scene), render, fps_max as u64));
   let link = Rc::clone(win);
   l.add_event_provider(link);
   return l;
