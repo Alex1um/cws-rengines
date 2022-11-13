@@ -133,9 +133,9 @@ impl Area {
   sy: usize,
   sz: usize) {
     let mut new_area = vec![vec![vec![Option::<GameObjectID>::None; sx]; sy]; sz];
-    for z in 0..min(sx, self.sz) {
+    for z in 0..min(sz, self.sz) {
       for y in 0..min(sy, self.sy) {
-        for x in 0..min(sz, self.sz) {
+        for x in 0..min(sx, self.sx) {
           new_area[z][y][x] = self.area[z][y][x].take();
         }
       }

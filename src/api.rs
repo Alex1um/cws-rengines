@@ -81,7 +81,7 @@ extern "C" fn create_event_loop<'a>(scene: &SceneRef<'a>, win: &WindowRef, scree
   let render = SDLRender::new(Rc::clone(screen),
                               Rc::clone(&win),
   );
-  let mut l = Box::new(EventLoop::new(Rc::clone(scene), render, fps_max as u64));
+  let mut l = Box::new(EventLoop::new(Rc::clone(scene), render, fps_max as u32));
   let link = Rc::clone(win);
   l.add_event_provider(link);
   return l;

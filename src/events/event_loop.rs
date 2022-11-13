@@ -31,11 +31,11 @@ pub struct EventLoop<'a, T: Render + Sized> {
   render: T,
   event_listeners: FxHashMap<Event, Vec<EventCallBack>>,
   event_providers: Vec<Rc<RefCell<dyn EventProvider>>>,
-  millis_per_frame: u64,
+  millis_per_frame: u32,
 }
 
 impl<T> EventLoop<'_, T> where T: Render + Sized {
-  pub fn new(scene: SceneRef, render: T, max_fps: u64) -> EventLoop<T> {
+  pub fn new(scene: SceneRef, render: T, max_fps: u32) -> EventLoop<T> {
     EventLoop {
       scene,
       render,
@@ -60,10 +60,6 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
 
   pub fn add_event_provider(&mut self, provider: Rc<RefCell<dyn EventProvider>>) {
     self.event_providers.push(provider);
-  }
-
-  pub fn set_max_fps(&mut self, max_fps: u64) {
-    self.millis_per_frame = 1000 / max_fps;
   }
 
   pub fn start(&mut self) {
@@ -97,11 +93,11 @@ impl<T> EventLoop<'_, T> where T: Render + Sized {
         _ => {}
       };
 
-      let time = (clock.elapsed().as_millis()) as u64;
+      let time = (clock.elapsed().as_millis()) as u32;
 
       if self.millis_per_frame > time {
         #[cfg(not(target_os = "emscripten"))]
-        sleep(Duration::from_millis(self.millis_per_frame - time));
+        sleep(Duration::from_millis((self.millis_per_frame - time) as u64));
 
         #[cfg(target_os = "emscripten")]
         unsafe { emscripten_sleep(self.millis_per_frame - time); }

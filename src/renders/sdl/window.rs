@@ -143,6 +143,9 @@ impl EventProvider for Window {
 
             Some(Event::MouseWheel { x_dir, y_dir, x, y })
           }
+          SDLEvent::Quit { .. } => {
+            Some(Event::Exit)
+          }
           _ => {
             #[cfg(feature = "provide_dbg")]
             println!("event: {:?}", e);
