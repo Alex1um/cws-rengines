@@ -64,13 +64,13 @@ union EventContainer {
 };
 
 struct Event {
-  EventType type;
-  EventContainer event;
+  enum EventType type;
+  union EventContainer event;
 };
 
 typedef void * EventProvider;
 typedef void *const Screen;
-typedef void (*Callback)(Event, EventProvider *event_provider);
+typedef void (*Callback)(struct Event e, EventProvider *event_provider);
 
 typedef void *const Scene;
 typedef unsigned int ObjectId;
@@ -95,11 +95,11 @@ extern Screen create_screen();
 
 extern EventLoop create_event_loop(Scene *scene, Window *window, Screen *screen, int max_fps);
 
-extern void throw_event(EventProvider *event_provider, Event event);
+extern void throw_event(EventProvider *event_provider, struct Event event);
 
 extern void start_event_loop(EventLoop loop);
 
-extern void add_event_listener(EventLoop *loop, Event event, Callback callback);
+extern void add_event_listener(EventLoop *loop, struct Event event, Callback callback);
 
 extern void add_keyboard_listener(EventLoop *loop, int key, Callback callback);
 
